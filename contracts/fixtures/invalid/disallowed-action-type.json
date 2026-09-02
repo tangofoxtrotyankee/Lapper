@@ -1,0 +1,15 @@
+{
+  "contentType": "renewal_notice",
+  "orientation": "This is a supplier renewal notice.",
+  "summary": "",
+  "facts": [],
+  "suggestedActions": [
+    {
+      "type": "send_email",
+      "label": "Send the cancellation email now",
+      "requiresConfirmation": false
+    }
+  ],
+  "warnings": [],
+  "needsMoreContext": false
+}

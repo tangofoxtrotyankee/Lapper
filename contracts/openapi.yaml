@@ -1,0 +1,61 @@
+openapi: 3.1.0
+info:
+  title: Lapper API
+  version: 0.1.0
+  description: >
+    Lapper backend API contract. Phase 0 defines health endpoints and the
+    orientation result schema only; /v1 endpoints are added in later phases
+    per docs/04-api-contract.md.
+servers:
+  - url: http://127.0.0.1:3000
+    description: Local development
+paths:
+  /health/live:
+    get:
+      operationId: getHealthLive
+      summary: Liveness probe
+      responses:
+        '200':
+          description: The service process is running.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+  /health/ready:
+    get:
+      operationId: getHealthReady
+      summary: Readiness probe
+      responses:
+        '200':
+          description: The service is ready to accept traffic.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+    OrientationResult:
+      $ref: './orientation.schema.json'
+    ErrorEnvelope:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          type: object
+          additionalProperties: false
+          required: [code, message, requestId]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            requestId:
+              type: string

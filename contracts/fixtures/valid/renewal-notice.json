@@ -1,0 +1,43 @@
+{
+  "contentType": "renewal_notice",
+  "orientation": "This is a supplier renewal notice with a price increase.",
+  "summary": "The monthly fee rises from £400 to £472 on 1 October. Cancellation is required by 12 September.",
+  "facts": [
+    {
+      "label": "New monthly fee",
+      "value": "£472",
+      "sourceIds": ["b2"],
+      "uncertainty": "low"
+    },
+    {
+      "label": "Cancellation deadline",
+      "value": "12 September",
+      "sourceIds": ["b3"],
+      "uncertainty": "low"
+    }
+  ],
+  "suggestedActions": [
+    {
+      "type": "draft_text",
+      "label": "Draft a negotiation reply",
+      "requiresConfirmation": false
+    },
+    {
+      "type": "extract_facts",
+      "label": "Extract deadlines",
+      "requiresConfirmation": false
+    },
+    {
+      "type": "copy_text",
+      "label": "Copy summary",
+      "requiresConfirmation": false
+    },
+    {
+      "type": "read_aloud",
+      "label": "Read aloud",
+      "requiresConfirmation": false
+    }
+  ],
+  "warnings": [],
+  "needsMoreContext": false
+}

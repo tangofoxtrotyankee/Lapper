@@ -1,0 +1,36 @@
+{
+  "name": "@lapper/backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Lapper backend API (Fastify 5, TypeScript strict)",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "dev": "node --watch --experimental-strip-types src/server.ts",
+    "start": "node dist/server.js",
+    "validate:contracts": "node scripts/validate-contracts.mjs"
+  },
+  "dependencies": {
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "fastify": "^5.12.1"
+  },
+  "devDependencies": {
+    "@seriousme/openapi-schema-validator": "^2.9.1",
+    "@types/node": "^24.10.9",
+    "eslint": "^10.9.1",
+    "prettier": "^3.9.6",
+    "typescript": "~5.9.0",
+    "typescript-eslint": "^8.69.0",
+    "vitest": "^4.1.11"
+  }
+}
