@@ -55,6 +55,8 @@ This repository pack is designed to be handed directly to Claude Code before imp
 - `contracts/` — OpenAPI 3.1 document, orientation JSON schema and shared
   good/bad fixtures. Validate: `npm run validate:contracts` (from `backend/`).
 - `docs/adr/` — architecture decision records (see `CLAUDE.md` ADR policy).
+- `docs/phase-0-testing-guide.md` — how to verify Phase 0 by hand; record
+  results in `docs/test-logs/phase-0.md`.
 - `.github/workflows/` — CI (backend, contracts, Windows desktop build,
   gitleaks secret scan, dependency review) and CodeQL.
 

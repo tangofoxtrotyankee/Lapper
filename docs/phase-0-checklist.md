@@ -70,6 +70,11 @@ to concrete deliverables in this repository.
 | secret/dependency scanning | gitleaks + dependency review + `npm audit` + CodeQL |
 | ADR folder | `docs/adr/` with template and README |
 
+## Manual verification
+
+Human-runnable verification steps live in `docs/phase-0-testing-guide.md`;
+record outcomes in `docs/test-logs/phase-0.md`.
+
 ## Prerequisites / conflicts identified
 
 1. **This development environment is Linux.** The WinUI 3 solution cannot be
