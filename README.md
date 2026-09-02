@@ -45,6 +45,19 @@ This repository pack is designed to be handed directly to Claude Code before imp
 - All state-changing actions require allowlisted types and explicit policy checks.
 - No vector database, Redis, microservices, autonomous agent framework or browser automation in MVP.
 
+## Repository layout
+
+- `desktop/` — Windows client solution (`Lapper.slnx`, WinUI 3 / .NET 10).
+  Build on Windows: `dotnet build desktop/Lapper.slnx -p:Platform=x64`.
+  Cross-platform contract tests: `dotnet test desktop/Lapper.Contracts.Tests`.
+- `backend/` — Fastify 5 / TypeScript backend. `npm ci && npm test`; start
+  with `npm run dev` (no secrets required; `/health/live` returns 200).
+- `contracts/` — OpenAPI 3.1 document, orientation JSON schema and shared
+  good/bad fixtures. Validate: `npm run validate:contracts` (from `backend/`).
+- `docs/adr/` — architecture decision records (see `CLAUDE.md` ADR policy).
+- `.github/workflows/` — CI (backend, contracts, Windows desktop build,
+  gitleaks secret scan, dependency review) and CodeQL.
+
 ## Phases
 
 - Phase 0: repo, tooling, contracts, build pipeline
