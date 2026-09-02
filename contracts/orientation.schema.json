@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lapper.app/schemas/orientation-result.json",
+  "title": "OrientationResult",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contentType", "orientation", "summary", "facts", "suggestedActions", "warnings", "needsMoreContext"],
+  "properties": {
+    "contentType": {"type": "string", "maxLength": 80},
+    "orientation": {"type": "string", "maxLength": 500},
+    "summary": {"type": "string", "maxLength": 2000},
+    "facts": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["label", "value", "sourceIds", "uncertainty"],
+        "properties": {
+          "label": {"type": "string", "maxLength": 100},
+          "value": {"type": "string", "maxLength": 500},
+          "sourceIds": {"type": "array", "items": {"type": "string"}, "maxItems": 10},
+          "uncertainty": {"type": "string", "enum": ["low", "medium", "high"]}
+        }
+      }
+    },
+    "suggestedActions": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "label", "requiresConfirmation"],
+        "properties": {
+          "type": {"type": "string", "enum": ["copy_text", "read_aloud", "draft_text", "extract_facts", "ask_question", "share_text"]},
+          "label": {"type": "string", "maxLength": 100},
+          "requiresConfirmation": {"type": "boolean"}
+        }
+      }
+    },
+    "warnings": {"type": "array", "items": {"type": "string", "maxLength": 300}, "maxItems": 10},
+    "needsMoreContext": {"type": "boolean"}
+  }
+}
