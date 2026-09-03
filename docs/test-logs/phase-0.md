@@ -69,7 +69,7 @@ Fixes applied after Session 1:
 | B2 | `npm test` after fix (Linux) | `Test Files 2 passed (2)`, `Tests 15 passed (15)` | PASS | |
 | B2w | `Backend tests (Windows)` CI job | Green in CI run #7 (windows-latest, Node 24, all 15 tests) | PASS | Windows proof of the B2 fix: https://github.com/tangofoxtrotyankee/Lapper/actions/runs/33771872834 |
 | B3 | `format:check` from LF checkout | `All matched files use Prettier code style!` | PASS | `.gitattributes` now forces LF on Windows checkouts; existing clones need the re-checkout step in the guide |
-| A1 | Dependency review on PR run | pending | | PR #1 was merged before the fixes landed; verified on the follow-up fixes PR after Sam enables the Dependency graph repo setting |
+| A1 | Dependency review on PR run | Green on PR #2 (run #11, attempt 3) after Sam enabled the repository's Dependency graph setting | PASS | https://github.com/tangofoxtrotyankee/Lapper/actions/runs/33775699841 |
 | — | Full push CI run | Run #7: success — Backend, Backend tests (Windows), Contracts, Desktop, Secret scanning all green | PASS | |
 
 ---
@@ -82,9 +82,14 @@ Fixes applied after Session 1:
 | 2 | Backend starts locally and `/health/live` returns 200 | PASS (Session 1: B5) |
 | 3 | All automated tests pass | PASS (Session 2: B2, B2w) |
 | 4 | No production secrets required for basic build | PASS (Session 1: A3, B5) |
-| 5 | CI runs desktop build, backend typecheck/tests, schema validation | pending Session 2 (A1) |
+| 5 | CI runs desktop build, backend typecheck/tests, schema validation | PASS (Session 2: A1, full PR CI green) |
 | 6 | Orientation schema validates known good/bad fixtures | PASS (Session 1: B4, C2) |
 
-**Phase 0 accepted — Phase 1 may begin:** pending — blocked only on A1
-(Dependency review green on the fixes PR once the repository's Dependency
-graph setting is enabled). B2/B2w and B3 are resolved and verified above.
+**Phase 0 accepted — Phase 1 may begin:** yes
+
+All six acceptance criteria PASS. B2/B2w, B3 and A1 were resolved and
+verified in Session 2; the fixes PR (#2) ran fully green CI including
+Dependency review on 2026-09-03.
+
+Signed: Sam (Session 1 manual verification) / Claude Code (Session 2 fix
+verification) — 2026-09-03
