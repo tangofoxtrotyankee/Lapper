@@ -1,0 +1,14 @@
+# Normalize all text files to LF in the repository AND in working trees,
+# so Prettier's format:check (which enforces LF) passes on Windows clones.
+# Matches .editorconfig (end_of_line = lf).
+* text=auto eol=lf
+
+# Binary files - never converted
+*.png binary
+*.ico binary
+*.gif binary
+*.jpg binary
+*.jpeg binary
+*.pfx binary
+*.snk binary
+*.p12 binary

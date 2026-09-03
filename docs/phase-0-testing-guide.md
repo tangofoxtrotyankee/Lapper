@@ -26,8 +26,13 @@ the most recent run on branch `claude/phase-0-setup-testing-rkc2cq`.
   - *Contracts (schema + fixtures + OpenAPI 3.1)*
   - *Desktop (Windows solution build + tests)*
   - *Secret scanning (gitleaks)*
-- Note: *Dependency review* is expected to show as **skipped** — it only
-  runs on pull requests.
+- Note: *Dependency review* is **skipped on push-triggered runs** but
+  **executes on pull-request runs**. On PR runs it requires the repository's
+  **Dependency graph** feature: GitHub → Settings → Advanced Security /
+  Security → "Dependency graph" → Enable (free for public repositories).
+  If it fails with `Dependency review is not supported on this repository.
+  Please ensure that Dependency graph is enabled`, that toggle is off —
+  enable it and re-run the failed job.
 - Record: the run number, the commit SHA it ran on, and pass/fail per job.
 
 **A2. The desktop build really happened on Windows.**
@@ -80,6 +85,11 @@ npm test
 - Record: the exact counts.
 
 **B3. Lint, types and formatting.**
+
+> Windows note: if `format:check` reports style issues in many files, your
+> clone probably predates the repository's `.gitattributes` (which forces LF
+> line endings on checkout). Fix by re-checking out:
+> `git rm -rf --cached . && git reset --hard` — or simply re-clone.
 
 ```
 npm run lint
@@ -142,8 +152,9 @@ From the repository root (clone as in B1 if you haven't):
 dotnet build desktop/Lapper.slnx -p:Platform=x64
 ```
 
-- Expected: `Build succeeded.` with 0 errors (first run downloads packages,
-  so allow a few minutes). No certificate or secret is asked for.
+- Expected: `Build succeeded.` with 0 errors. The first run downloads
+  packages — the initial restore alone can take ~3 minutes on normal
+  broadband. No certificate or secret is asked for.
 - Record: build succeeded/failed, elapsed time, any warnings.
 
 **C2. Desktop contract tests.**
@@ -156,8 +167,14 @@ dotnet test desktop/Lapper.Contracts.Tests
 - Record: the counts.
 
 **C3 (optional). Launch the app.**
-Open `desktop/Lapper.slnx` in Visual Studio 2022+ (with the WinUI/Windows
-App SDK workload), set `Lapper.Shell` as startup, platform `x64`, and run.
+Open `desktop/Lapper.slnx` in **Visual Studio 2026** (Community is fine)
+with the **WinUI application development** workload — .NET 10 is not
+supported by Visual Studio 2022. Set `Lapper.Shell` as startup, platform
+`x64`, and run. The repo includes `Properties/launchSettings.json` (MSIX
+package profile) and marks the project for deployment in the solution; if
+Visual Studio still reports "The project needs to be deployed", tick
+**Deploy** for `Lapper.Shell` / `x64` in Build → Configuration Manager and
+run again.
 
 - Expected: an empty window titled **Lapper** showing "Phase 0 foundation
   build. Screen understanding arrives in later phases." That is the entire
