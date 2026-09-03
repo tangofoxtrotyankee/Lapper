@@ -62,15 +62,15 @@ Fixes applied after Session 1:
 |---|---|
 | Date | 2026-09-03 |
 | Tester | Claude Code (Linux container + GitHub Actions) |
-| Commit tested | (filled below) |
+| Commit tested | 41002d7 (rebased onto main as 5ebe974 after PR #1 merged) |
 
 | Step | Check | Actual result | Pass/Fail | Notes |
 |---|---|---|---|---|
-| B2 | `npm test` after fix (Linux) | pending | | |
-| B2w | `Backend tests (Windows)` CI job | pending | | Windows proof of the B2 fix |
-| B3 | `format:check` from LF checkout | pending | | `.gitattributes` guarantees LF on fresh/renormalized clones |
-| A1 | Dependency review on PR #1 | pending | | Requires Sam's Dependency graph toggle |
-| — | Full push CI run | pending | | |
+| B2 | `npm test` after fix (Linux) | `Test Files 2 passed (2)`, `Tests 15 passed (15)` | PASS | |
+| B2w | `Backend tests (Windows)` CI job | Green in CI run #7 (windows-latest, Node 24, all 15 tests) | PASS | Windows proof of the B2 fix: https://github.com/tangofoxtrotyankee/Lapper/actions/runs/33771872834 |
+| B3 | `format:check` from LF checkout | `All matched files use Prettier code style!` | PASS | `.gitattributes` now forces LF on Windows checkouts; existing clones need the re-checkout step in the guide |
+| A1 | Dependency review on PR run | pending | | PR #1 was merged before the fixes landed; verified on the follow-up fixes PR after Sam enables the Dependency graph repo setting |
+| — | Full push CI run | Run #7: success — Backend, Backend tests (Windows), Contracts, Desktop, Secret scanning all green | PASS | |
 
 ---
 
@@ -80,7 +80,7 @@ Fixes applied after Session 1:
 |---|---|---|
 | 1 | Clean clone can build Windows solution | PASS (Session 1: A2, C1) |
 | 2 | Backend starts locally and `/health/live` returns 200 | PASS (Session 1: B5) |
-| 3 | All automated tests pass | pending Session 2 (B2 fix) |
+| 3 | All automated tests pass | PASS (Session 2: B2, B2w) |
 | 4 | No production secrets required for basic build | PASS (Session 1: A3, B5) |
 | 5 | CI runs desktop build, backend typecheck/tests, schema validation | pending Session 2 (A1) |
 | 6 | Orientation schema validates known good/bad fixtures | PASS (Session 1: B4, C2) |
