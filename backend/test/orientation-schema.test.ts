@@ -1,9 +1,12 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { loadOrientationSchema, validateOrientationResult } from '../src/contracts/orientation.js';
 
-const fixturesRoot = new URL('../../contracts/fixtures/', import.meta.url).pathname;
+// fileURLToPath, not URL.pathname: pathname yields "/C:/..." on Windows,
+// which join() then mangles into "C:\C:\...".
+const fixturesRoot = fileURLToPath(new URL('../../contracts/fixtures/', import.meta.url));
 
 function loadFixtures(kind: 'valid' | 'invalid'): { name: string; data: unknown }[] {
   const dir = join(fixturesRoot, kind);

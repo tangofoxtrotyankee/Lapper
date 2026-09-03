@@ -1,0 +1,7 @@
+{
+  "profiles": {
+    "Lapper.Shell (Package)": {
+      "commandName": "MsixPackage"
+    }
+  }
+}

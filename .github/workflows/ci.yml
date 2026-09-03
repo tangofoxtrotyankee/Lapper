@@ -32,6 +32,22 @@ jobs:
       - name: Dependency audit (production dependencies)
         run: npm audit --omit=dev --audit-level=high
 
+  backend-windows:
+    name: Backend tests (Windows)
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npm test
+
   contracts:
     name: Contracts (schema + fixtures + OpenAPI 3.1)
     runs-on: ubuntu-latest
