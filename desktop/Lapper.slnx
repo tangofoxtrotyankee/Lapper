@@ -1,0 +1,15 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="Release" />
+    <Platform Name="x64" />
+    <Platform Name="Any CPU" />
+  </Configurations>
+  <Project Path="Lapper.Actions/Lapper.Actions.csproj" />
+  <Project Path="Lapper.ApiClient/Lapper.ApiClient.csproj" />
+  <Project Path="Lapper.Context.Windows/Lapper.Context.Windows.csproj" />
+  <Project Path="Lapper.Contracts.Tests/Lapper.Contracts.Tests.csproj" />
+  <Project Path="Lapper.Contracts/Lapper.Contracts.csproj" />
+  <Project Path="Lapper.Privacy/Lapper.Privacy.csproj" />
+  <Project Path="Lapper.Shell/Lapper.Shell.csproj" />
+</Solution>

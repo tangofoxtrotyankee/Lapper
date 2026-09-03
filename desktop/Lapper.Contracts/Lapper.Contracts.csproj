@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Lapper.Contracts</RootNamespace>
+    <Platforms>AnyCPU;x64</Platforms>
+    <Description>Shared API contract DTOs and the embedded orientation JSON schema.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- contracts/orientation.schema.json is the single source of truth. -->
+    <EmbeddedResource Include="..\..\contracts\orientation.schema.json"
+                      Link="Schemas\orientation.schema.json"
+                      LogicalName="Lapper.Contracts.orientation.schema.json" />
+  </ItemGroup>
+
+</Project>

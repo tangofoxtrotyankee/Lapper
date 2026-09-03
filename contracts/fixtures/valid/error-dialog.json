@@ -1,0 +1,27 @@
+{
+  "contentType": "error_dialog",
+  "orientation": "The app cannot connect because its API token has expired. Re-authentication is the likely next step.",
+  "summary": "An authentication error dialog reports an expired API token. Signing in again should restore the connection.",
+  "facts": [
+    {
+      "label": "Error cause",
+      "value": "Expired API token",
+      "sourceIds": ["b1"],
+      "uncertainty": "medium"
+    }
+  ],
+  "suggestedActions": [
+    {
+      "type": "copy_text",
+      "label": "Copy error details",
+      "requiresConfirmation": false
+    },
+    {
+      "type": "ask_question",
+      "label": "Ask Lapper",
+      "requiresConfirmation": false
+    }
+  ],
+  "warnings": [],
+  "needsMoreContext": false
+}

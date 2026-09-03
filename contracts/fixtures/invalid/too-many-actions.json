@@ -1,0 +1,35 @@
+{
+  "contentType": "article",
+  "orientation": "Too many actions.",
+  "summary": "",
+  "facts": [],
+  "suggestedActions": [
+    {
+      "type": "copy_text",
+      "label": "a0",
+      "requiresConfirmation": false
+    },
+    {
+      "type": "copy_text",
+      "label": "a1",
+      "requiresConfirmation": false
+    },
+    {
+      "type": "copy_text",
+      "label": "a2",
+      "requiresConfirmation": false
+    },
+    {
+      "type": "copy_text",
+      "label": "a3",
+      "requiresConfirmation": false
+    },
+    {
+      "type": "copy_text",
+      "label": "a4",
+      "requiresConfirmation": false
+    }
+  ],
+  "warnings": [],
+  "needsMoreContext": false
+}

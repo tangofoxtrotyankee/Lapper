@@ -1,0 +1,15 @@
+{
+  "contentType": "invoice",
+  "orientation": "This is an invoice.",
+  "summary": "",
+  "facts": [
+    {
+      "label": "Amount due",
+      "value": "£120",
+      "uncertainty": "low"
+    }
+  ],
+  "suggestedActions": [],
+  "warnings": [],
+  "needsMoreContext": false
+}

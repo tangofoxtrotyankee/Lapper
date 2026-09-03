@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>Lapper.Shell</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Platforms>x64;AnyCPU</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <UseWinUI>true</UseWinUI>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <WindowsPackageType>MSIX</WindowsPackageType>
+    <PublishProfile>win-x64.pubxml</PublishProfile>
+    <!-- CI and local builds do not sign; release signing is configured separately. -->
+    <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AppxManifest Include="Package.appxmanifest">
+      <SubType>Designer</SubType>
+    </AppxManifest>
+    <Content Include="Assets\**\*.png" />
+    <Manifest Include="$(ApplicationManifest)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Lapper.Actions\Lapper.Actions.csproj" />
+    <ProjectReference Include="..\Lapper.ApiClient\Lapper.ApiClient.csproj" />
+    <ProjectReference Include="..\Lapper.Context.Windows\Lapper.Context.Windows.csproj" />
+    <ProjectReference Include="..\Lapper.Contracts\Lapper.Contracts.csproj" />
+    <ProjectReference Include="..\Lapper.Privacy\Lapper.Privacy.csproj" />
+  </ItemGroup>
+
+</Project>

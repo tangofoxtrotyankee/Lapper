@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>Lapper.Context.Windows</RootNamespace>
+    <Platforms>x64</Platforms>
+    <Description>Foreground window detection, UI Automation extraction, selection retrieval, OCR and screenshot fallback. Implemented from Phase 2.</Description>
+  </PropertyGroup>
+
+</Project>
