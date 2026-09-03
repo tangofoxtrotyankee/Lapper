@@ -85,5 +85,6 @@ Fixes applied after Session 1:
 | 5 | CI runs desktop build, backend typecheck/tests, schema validation | pending Session 2 (A1) |
 | 6 | Orientation schema validates known good/bad fixtures | PASS (Session 1: B4, C2) |
 
-**Phase 0 accepted — Phase 1 may begin:** pending (blocked on Session 2:
-B2/B2w, B3, A1)
+**Phase 0 accepted — Phase 1 may begin:** pending — blocked only on A1
+(Dependency review green on the fixes PR once the repository's Dependency
+graph setting is enabled). B2/B2w and B3 are resolved and verified above.
