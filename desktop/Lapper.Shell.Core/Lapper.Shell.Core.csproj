@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Lapper.Shell.Core</RootNamespace>
+    <Platforms>AnyCPU;x64</Platforms>
+    <Description>Cross-platform shell logic: shortcut gestures, pill placement, local settings persistence. No UI, no capture, no network.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+  </ItemGroup>
+
+</Project>
