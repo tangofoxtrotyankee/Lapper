@@ -26,7 +26,7 @@ public static class Program
             return;
         }
 
-        Application.Start(_ =>
+        Application.Start(static callbackParams =>
         {
             var context = new DispatcherQueueSynchronizationContext(
                 DispatcherQueue.GetForCurrentThread());
