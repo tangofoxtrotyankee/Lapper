@@ -13,6 +13,8 @@
     <EnableMsixTooling>true</EnableMsixTooling>
     <WindowsPackageType>MSIX</WindowsPackageType>
     <PublishProfile>win-x64.pubxml</PublishProfile>
+    <!-- Single-instance enforcement needs a custom Main (Program.cs). -->
+    <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
     <!-- CI and local builds do not sign; release signing is configured separately. -->
     <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
   </PropertyGroup>
@@ -26,6 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="H.NotifyIcon.WinUI" />
     <PackageReference Include="Microsoft.WindowsAppSDK" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" />
   </ItemGroup>
@@ -36,6 +39,7 @@
     <ProjectReference Include="..\Lapper.Context.Windows\Lapper.Context.Windows.csproj" />
     <ProjectReference Include="..\Lapper.Contracts\Lapper.Contracts.csproj" />
     <ProjectReference Include="..\Lapper.Privacy\Lapper.Privacy.csproj" />
+    <ProjectReference Include="..\Lapper.Shell.Core\Lapper.Shell.Core.csproj" />
   </ItemGroup>
 
 </Project>

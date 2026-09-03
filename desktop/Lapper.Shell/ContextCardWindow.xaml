@@ -1,0 +1,79 @@
+<Window
+    x:Class="Lapper.Shell.ContextCardWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Lapper">
+    <Border
+        Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
+        BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}"
+        BorderThickness="1"
+        CornerRadius="12"
+        KeyDown="OnRootKeyDown">
+        <Grid Margin="16" RowSpacing="12">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock
+                    Text="Lapper"
+                    Style="{StaticResource SubtitleTextBlockStyle}"
+                    VerticalAlignment="Center" />
+                <Button
+                    x:Name="ExpandButton"
+                    Grid.Column="1"
+                    Content="Expand"
+                    Click="OnExpandClicked" />
+                <Button Grid.Column="2" Content="Hide" Click="OnHideClicked" />
+            </Grid>
+
+            <Grid Grid.Row="1">
+                <StackPanel x:Name="LoadingState" Spacing="8" Visibility="Collapsed">
+                    <ProgressRing IsActive="True" Width="28" Height="28" HorizontalAlignment="Left" />
+                    <TextBlock Text="Reading this screen…" />
+                </StackPanel>
+
+                <StackPanel x:Name="ErrorState" Spacing="8" Visibility="Collapsed">
+                    <TextBlock Text="Something went wrong" FontWeight="SemiBold" />
+                    <TextBlock
+                        x:Name="ErrorMessage"
+                        Text="Lapper couldn't complete that. Try again."
+                        TextWrapping="Wrap" />
+                </StackPanel>
+
+                <StackPanel x:Name="SuccessState" Spacing="8" Visibility="Collapsed">
+                    <TextBlock
+                        Text="Phase 1 shell preview — screen understanding arrives in Phase 3."
+                        FontWeight="SemiBold"
+                        TextWrapping="Wrap" />
+                    <TextBlock
+                        Text="When live, a one-sentence orientation about your active window will stream here, followed by suggested actions."
+                        TextWrapping="Wrap"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+            </Grid>
+
+            <StackPanel
+                x:Name="StatePreviewRow"
+                Grid.Row="2"
+                Orientation="Horizontal"
+                Spacing="8"
+                Visibility="Collapsed">
+                <TextBlock
+                    Text="Preview states:"
+                    VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <Button Content="Loading" Click="OnPreviewLoading" />
+                <Button Content="Error" Click="OnPreviewError" />
+                <Button Content="Success" Click="OnPreviewSuccess" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

@@ -1,0 +1,21 @@
+<Window
+    x:Class="Lapper.Shell.PillWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Lapper">
+    <Border
+        x:Name="PillRoot"
+        CornerRadius="24"
+        Background="{ThemeResource AccentFillColorDefaultBrush}"
+        PointerPressed="OnPointerPressed"
+        PointerMoved="OnPointerMoved"
+        PointerReleased="OnPointerReleased"
+        PointerCaptureLost="OnPointerCaptureLost">
+        <TextBlock
+            Text="Lapper"
+            Foreground="White"
+            FontWeight="SemiBold"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center" />
+    </Border>
+</Window>
