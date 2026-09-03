@@ -15,6 +15,9 @@
     <PublishProfile>win-x64.pubxml</PublishProfile>
     <!-- Single-instance enforcement needs a custom Main (Program.cs). -->
     <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
+    <!-- Required by the LibraryImport interop source generator (Interop/Win32.cs);
+         the app itself contains no hand-written unsafe code. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <!-- CI and local builds do not sign; release signing is configured separately. -->
     <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
   </PropertyGroup>
