@@ -78,6 +78,8 @@ jobs:
         run: dotnet build desktop/Lapper.slnx -c Release -p:Platform=x64 -p:AppxPackageSigningEnabled=false --no-restore
       - name: Test (Lapper.Contracts.Tests)
         run: dotnet test desktop/Lapper.Contracts.Tests/Lapper.Contracts.Tests.csproj -c Release
+      - name: Test (Lapper.Shell.Core.Tests)
+        run: dotnet test desktop/Lapper.Shell.Core.Tests/Lapper.Shell.Core.Tests.csproj -c Release
 
   secret-scan:
     name: Secret scanning (gitleaks)
