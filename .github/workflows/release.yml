@@ -8,6 +8,15 @@ name: Release (MSIX)
 
 on:
   workflow_dispatch:
+  # Temporary pre-merge validation trigger: GitHub only allows manual
+  # dispatch once this file is on the default branch, so until the wave
+  # merges, changes to the packaging inputs build the MSIX directly.
+  push:
+    branches: ['claude/**']
+    paths:
+      - '.github/workflows/release.yml'
+      - 'scripts/Install-Lapper.ps1'
+      - 'INSTALL.md'
 
 permissions:
   contents: read
