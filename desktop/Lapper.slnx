@@ -4,10 +4,19 @@
     <Platform Name="Any CPU" />
   </Configurations>
   <Project Path="Lapper.Actions/Lapper.Actions.csproj" />
+  <Project Path="Lapper.ApiClient.Tests/Lapper.ApiClient.Tests.csproj">
+    <Platform Solution="*|x64" Project="x64" />
+  </Project>
   <Project Path="Lapper.ApiClient/Lapper.ApiClient.csproj" />
+  <Project Path="Lapper.Context.Windows.Tests/Lapper.Context.Windows.Tests.csproj">
+    <Platform Project="x64" />
+  </Project>
   <Project Path="Lapper.Context.Windows/Lapper.Context.Windows.csproj" />
   <Project Path="Lapper.Contracts.Tests/Lapper.Contracts.Tests.csproj" />
   <Project Path="Lapper.Contracts/Lapper.Contracts.csproj" />
+  <Project Path="Lapper.Privacy.Tests/Lapper.Privacy.Tests.csproj">
+    <Platform Project="x64" />
+  </Project>
   <Project Path="Lapper.Privacy/Lapper.Privacy.csproj" />
   <Project Path="Lapper.Shell.Core.Tests/Lapper.Shell.Core.Tests.csproj">
     <Platform Solution="*|x64" Project="x64" />

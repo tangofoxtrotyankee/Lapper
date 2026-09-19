@@ -40,7 +40,10 @@ public sealed partial class SettingsWindow : Window
     {
         ShortcutBox.Text = _settings.Gesture.Format();
         PillToggle.IsOn = _settings.PillVisible;
+        BackendUrlBox.Text = _settings.BackendUrl;
+        ExcludedAppsBox.Text = string.Join(", ", _settings.UserExcludedApps);
         ShortcutFeedback.Visibility = Visibility.Collapsed;
+        BackendUrlFeedback.Visibility = Visibility.Collapsed;
         SaveFeedback.Text = string.Empty;
         _ = RefreshStartupToggleAsync();
 
@@ -68,6 +71,15 @@ public sealed partial class SettingsWindow : Window
 
         ShortcutFeedback.Visibility = Visibility.Collapsed;
 
+        if (!Lapper.ApiClient.BackendUrlValidator.TryValidate(BackendUrlBox.Text, out var backendUrl))
+        {
+            BackendUrlFeedback.Text =
+                "That backend URL isn't valid. Use http only for this computer (e.g. http://127.0.0.1:3000); remote servers need https.";
+            BackendUrlFeedback.Visibility = Visibility.Visible;
+            return;
+        }
+        BackendUrlFeedback.Visibility = Visibility.Collapsed;
+
         if (!_applyGesture(gesture!))
         {
             ShortcutFeedback.Text =
@@ -76,6 +88,9 @@ public sealed partial class SettingsWindow : Window
             return;
         }
 
+        _settings.BackendUrl = backendUrl!.ToString();
+        _settings.UserExcludedApps =
+            ExcludedAppsBox.Text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         _setPillVisible(PillToggle.IsOn);
         SaveFeedback.Text = "Saved.";
     }

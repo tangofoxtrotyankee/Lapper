@@ -80,6 +80,12 @@ jobs:
         run: dotnet test desktop/Lapper.Contracts.Tests/Lapper.Contracts.Tests.csproj -c Release
       - name: Test (Lapper.Shell.Core.Tests)
         run: dotnet test desktop/Lapper.Shell.Core.Tests/Lapper.Shell.Core.Tests.csproj -c Release
+      - name: Test (Lapper.ApiClient.Tests)
+        run: dotnet test desktop/Lapper.ApiClient.Tests/Lapper.ApiClient.Tests.csproj -c Release
+      - name: Test (Lapper.Privacy.Tests)
+        run: dotnet test desktop/Lapper.Privacy.Tests/Lapper.Privacy.Tests.csproj -c Release
+      - name: Test (Lapper.Context.Windows.Tests)
+        run: dotnet test desktop/Lapper.Context.Windows.Tests/Lapper.Context.Windows.Tests.csproj -c Release
 
   secret-scan:
     name: Secret scanning (gitleaks)

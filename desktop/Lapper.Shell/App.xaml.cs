@@ -1,3 +1,7 @@
+using Lapper.Actions;
+using Lapper.Context.Windows;
+using Lapper.Privacy.Exclusions;
+using Lapper.Privacy.Redaction;
 using Lapper.Shell.Core;
 using Lapper.Shell.Services;
 using Microsoft.UI.Dispatching;
@@ -7,15 +11,18 @@ using Microsoft.Windows.AppLifecycle;
 namespace Lapper.Shell;
 
 /// <summary>
-/// Application coordinator for the Phase 1 shell: wires the tray icon,
-/// floating pill, context card, settings window and global shortcut
-/// together. No screen capture, no AI calls in this phase.
+/// Application coordinator: tray, pill, card, settings, global shortcut,
+/// and the orientation loop (capture → privacy filter → backend → card).
 /// </summary>
 public partial class App : Application
 {
     private DispatcherQueue? _dispatcher;
     private SettingsService? _settings;
     private StartupService? _startup;
+    private SpeechService? _speech;
+    private ActionDispatcher? _actionDispatcher;
+    private ContextAcquisitionService? _acquisition;
+    private LapperOrchestrator? _orchestrator;
     private PillWindow? _pill;
     private ContextCardWindow? _card;
     private SettingsWindow? _settingsWindow;
@@ -31,21 +38,30 @@ public partial class App : Application
     {
         _dispatcher = DispatcherQueue.GetForCurrentThread();
 
-        // A second launch was redirected here (see Program.Main): surface the card.
-        AppInstance.GetCurrent().Activated += (_, _) => _dispatcher?.TryEnqueue(ShowCard);
+        // A second launch was redirected here (see Program.Main): trigger.
+        AppInstance.GetCurrent().Activated += (_, _) => _dispatcher?.TryEnqueue(Trigger);
 
         _settings = new SettingsService();
         _startup = new StartupService();
+        _speech = new SpeechService();
+        _actionDispatcher = new ActionDispatcher(_speech);
+        _acquisition = new ContextAcquisitionService(
+            new ExclusionPolicy(new SettingsExclusionSource(_settings)),
+            new SecretRedactor());
+        _orchestrator = new LapperOrchestrator(_settings, _acquisition, _actionDispatcher, _dispatcher!);
 
-        _card = new ContextCardWindow();
+        _card = new ContextCardWindow(_actionDispatcher);
+        _card.RefreshRequested += (_, _) => Trigger();
+        _orchestrator.AttachCard(_card);
+
         _pill = new PillWindow(_settings);
-        _pill.Clicked += (_, _) => ShowCard();
+        _pill.Clicked += (_, _) => Trigger();
 
-        _hotkey = new HotkeyService(ShowCard);
+        _hotkey = new HotkeyService(Trigger);
         _hotkey.TryRegister(_settings.Gesture);
 
         _tray = new TrayIconService(
-            openCard: ShowCard,
+            openCard: Trigger,
             openSettings: ShowSettings,
             isPillVisible: () => _settings!.PillVisible,
             setPillVisible: SetPillVisible,
@@ -57,7 +73,7 @@ public partial class App : Application
         }
     }
 
-    private void ShowCard() => _card?.ShowCard();
+    private void Trigger() => _ = _orchestrator?.TriggerAsync();
 
     private void ShowSettings()
     {
@@ -69,8 +85,6 @@ public partial class App : Application
     {
         if (_hotkey is null || !_hotkey.TryRegister(gesture))
         {
-            // Keep the previous stored gesture registered so the user is never
-            // left without a working shortcut.
             _hotkey?.TryRegister(_settings!.Gesture);
             return false;
         }
@@ -96,6 +110,9 @@ public partial class App : Application
     {
         _tray?.Dispose();
         _hotkey?.Dispose();
+        _orchestrator?.Dispose();
+        _acquisition?.Dispose();
+        _speech?.Dispose();
         _settings?.Dispose();
         Exit();
     }
