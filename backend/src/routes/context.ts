@@ -105,13 +105,15 @@ async function handle(
 
   reply.hijack();
   const sse = new SseWriter(reply);
-  sse.send('accepted', { requestId, model: decision.model, route: decision.route });
 
   let inputTokens = 0;
   let outputTokens = 0;
   let status = 'ok';
 
+  // Everything after hijack() must be exception-proof: an uncaught throw
+  // here would leave the socket open forever (Fastify no longer owns it).
   try {
+    sse.send('accepted', { requestId, model: decision.model, route: decision.route });
     const stream = options.gateway.stream({
       model: decision.model,
       instructions: call.instructions,
@@ -167,14 +169,17 @@ async function handle(
   }
 
   const latencyMs = Number((process.hrtime.bigint() - startedAt) / 1_000_000n);
-  sse.send('usage', {
-    model: decision.model,
-    route: decision.route,
-    inputTokens,
-    outputTokens,
-    latencyMs,
-  });
-  sse.end();
+  try {
+    sse.send('usage', {
+      model: decision.model,
+      route: decision.route,
+      inputTokens,
+      outputTokens,
+      latencyMs,
+    });
+  } finally {
+    sse.end();
+  }
 
   // Metadata only — never content.
   request.log.info({

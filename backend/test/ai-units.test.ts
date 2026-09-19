@@ -74,6 +74,48 @@ describe('strict schema derivation', () => {
   });
 });
 
+describe('strict schema keyword allowlist', () => {
+  const ALLOWED = new Set([
+    'type',
+    'properties',
+    'required',
+    'additionalProperties',
+    'items',
+    'enum',
+    'const',
+    'title',
+    'description',
+    'anyOf',
+    '$defs',
+    '$ref',
+  ]);
+
+  function collectKeys(node: unknown, keys: Set<string>, inProperties = false): void {
+    if (Array.isArray(node)) {
+      for (const item of node) {
+        collectKeys(item, keys);
+      }
+      return;
+    }
+    if (node !== null && typeof node === 'object') {
+      for (const [key, value] of Object.entries(node)) {
+        if (!inProperties) {
+          keys.add(key);
+        }
+        // Property NAMES under `properties` are data, not keywords.
+        collectKeys(value, keys, !inProperties && key === 'properties');
+      }
+    }
+  }
+
+  it('derived schema contains only strict-mode-supported keywords', () => {
+    const keys = new Set<string>();
+    collectKeys(deriveStrictSchema(orientationResultSchema), keys);
+    const unexpected = [...keys].filter((k) => !ALLOWED.has(k));
+    expect(unexpected).toEqual([]);
+  });
+});
+
 describe('SSE chunk parser', () => {
   it('parses frames split across arbitrary chunk boundaries', () => {
     const frames: { event: string; data: string }[] = [];

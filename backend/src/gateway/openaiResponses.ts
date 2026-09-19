@@ -108,6 +108,9 @@ export class OpenAiResponsesGateway implements ModelGateway {
         if (read.done) {
           break;
         }
+        if (buffer.pending.length > 1_048_576) {
+          throw new GatewayError('MODEL_ERROR', 'Provider stream exceeded buffer limits.');
+        }
         for (const frame of parseSseChunk(buffer, decoder.decode(read.value, { stream: true }))) {
           const parsed = safeJson(frame.data);
           if (parsed === undefined) {
@@ -127,6 +130,10 @@ export class OpenAiResponsesGateway implements ModelGateway {
                 outputTokens: numberOr(usage?.['output_tokens'], 0),
               },
             };
+          } else if (type === 'response.incomplete') {
+            // Truncated output (e.g. max_output_tokens) must never be
+            // parsed or surfaced as a result.
+            throw new GatewayError('MODEL_ERROR', 'Model output ended incomplete.');
           } else if (type === 'response.failed' || type === 'error') {
             throw new GatewayError('MODEL_ERROR', 'Provider reported a failed response.');
           }
