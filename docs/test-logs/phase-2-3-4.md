@@ -22,12 +22,12 @@ happened is fine, quoting screen text is not.
 
 | Step | Check | Actual result | Pass/Fail | Notes |
 |---|---|---|---|---|
-| P234-A1 | CI green; 13+34+15+27+21 desktop, 45 backend | | | |
+| P234-A1 | CI green; 13+34+18+30+30 desktop, 72 backend | | | |
 | P234-A2 | Release (MSIX) workflow produces installable artifact | | | |
-| P234-B1 | Backend `npm test` → 45 passed | | | |
+| P234-B1 | Backend `npm test` → 72 passed | | | |
 | P234-B2 | `validate:contracts` passes | | | |
-| P234-B3 | Cross-platform dotnet suites 34 + 15 passed | | | |
-| P234-B4 | Windows dotnet suites 27 + 21 passed | | | |
+| P234-B3 | Cross-platform dotnet suites 34 + 18 passed | | | |
+| P234-B4 | Windows dotnet suites 30 + 30 passed | | | |
 | P234-C1 | Streamed orientation end-to-end (note time-to-first-text) | | | |
 | P234-C2 | Coverage: Edge / Chrome / Notepad / Word / Outlook | | | |
 | P234-C3 | Facts concrete and grounded in on-screen content | | | |

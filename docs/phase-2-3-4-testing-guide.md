@@ -21,8 +21,8 @@ actions. It also adds an installable MSIX build.
 
 **P234-A1.** GitHub → Actions → latest CI run on the branch: all jobs
 green. The desktop job now runs five test suites — expected totals:
-contracts 13, shell-core 34, api-client 15, privacy 27, context-windows 21.
-Backend jobs run 45 tests on ubuntu and windows.
+contracts 13, shell-core 34, api-client 18, privacy 30, context-windows 30.
+Backend jobs run 72 tests on ubuntu and windows.
 
 **P234-A2.** Actions → "Release (MSIX)" → Run workflow on this branch.
 Expected: run goes green and produces an artifact `lapper-msix-x64`
@@ -32,17 +32,17 @@ containing `Lapper.msix`, `Lapper-Dev.cer`, `Install-Lapper.ps1`,
 ## Tier B — automated tests on any machine (~10 min)
 
 ```
-cd backend && npm ci && npm test          # expected: 45 passed
+cd backend && npm ci && npm test          # expected: 72 passed
 npm run validate:contracts                 # expected: all validations pass
 cd .. && dotnet test desktop/Lapper.Shell.Core.Tests   # 34 passed
-dotnet test desktop/Lapper.ApiClient.Tests             # 15 passed
+dotnet test desktop/Lapper.ApiClient.Tests             # 18 passed
 ```
 
 On Windows additionally:
 
 ```
-dotnet test desktop/Lapper.Privacy.Tests               # 27 passed
-dotnet test desktop/Lapper.Context.Windows.Tests       # 21 passed
+dotnet test desktop/Lapper.Privacy.Tests               # 30 passed
+dotnet test desktop/Lapper.Context.Windows.Tests       # 30 passed
 ```
 
 ## Tier C — manual Windows verification (~40 min)

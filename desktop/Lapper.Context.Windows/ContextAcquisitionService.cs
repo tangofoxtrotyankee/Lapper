@@ -67,21 +67,38 @@ public interface IContextAcquisitionService
 
 /// <summary>
 /// The Phase 2 pipeline (docs/02-architecture.md): probe → exclusion check
-/// BEFORE any capture → UIA (password gate before text) → OCR fallback →
-/// redaction → normalize → rank. Screen content only ever lives in memory
-/// inside the returned snapshot.
+/// BEFORE any capture → UIA (password gate before text) → OCR fallback
+/// (only when UIA succeeded AND yielded too little; never when password
+/// status is unknown — fail closed) → redaction → sensitive-content gate →
+/// normalize → rank. Screen content only ever lives in memory inside the
+/// returned snapshot.
 /// </summary>
-public sealed class ContextAcquisitionService(
-    IExclusionPolicy exclusionPolicy,
-    ISecretRedactor redactor) : IContextAcquisitionService, IDisposable
+public sealed class ContextAcquisitionService : IContextAcquisitionService, IDisposable
 {
-    private const int UiaHardTimeoutMs = 1500;
-    private const int MinUsefulBlocks = 2;
     private const int MinUsefulChars = 80;
 
-    private readonly CaptureThread _captureThread = new();
-    private UiaClient? _uiaClient;
-    private UiaExtractor? _uiaExtractor;
+    private readonly IExclusionPolicy _exclusionPolicy;
+    private readonly ISecretRedactor _redactor;
+    private readonly IUiaStage _uiaStage;
+    private readonly IPixelStage _pixelStage;
+
+    public ContextAcquisitionService(IExclusionPolicy exclusionPolicy, ISecretRedactor redactor)
+        : this(exclusionPolicy, redactor, new UiaStage(), new PixelStage())
+    {
+    }
+
+    /// <summary>Stage seams injectable so security ordering is testable.</summary>
+    public ContextAcquisitionService(
+        IExclusionPolicy exclusionPolicy,
+        ISecretRedactor redactor,
+        IUiaStage uiaStage,
+        IPixelStage pixelStage)
+    {
+        _exclusionPolicy = exclusionPolicy;
+        _redactor = redactor;
+        _uiaStage = uiaStage;
+        _pixelStage = pixelStage;
+    }
 
     public async Task<ContextAcquisitionResult> AcquireAsync(
         ForegroundWindowInfo probe,
@@ -92,7 +109,7 @@ public sealed class ContextAcquisitionService(
         probeWatch.Stop();
 
         // Exclusion BEFORE any UIA, OCR or pixel access. Fail closed.
-        var exclusion = exclusionPolicy.Evaluate(probe.Identity);
+        var exclusion = _exclusionPolicy.Evaluate(probe.Identity);
         if (exclusion.IsBlocked)
         {
             return Result(AcquisitionOutcome.ExcludedApp, exclusion, null,
@@ -106,59 +123,46 @@ public sealed class ContextAcquisitionService(
         var uiaWatch = Stopwatch.StartNew();
         try
         {
-            extraction = await _captureThread.RunAsync(
-                () =>
-                {
-                    _uiaClient ??= new UiaClient();
-                    _uiaExtractor ??= new UiaExtractor(_uiaClient);
-                    return _uiaExtractor.Extract(probe.Hwnd, isBrowser);
-                },
-                TimeSpan.FromMilliseconds(UiaHardTimeoutMs),
-                ct).ConfigureAwait(false);
+            extraction = await _uiaStage.ExtractAsync(probe.Hwnd, isBrowser, ct).ConfigureAwait(false);
         }
         catch (CaptureTimeoutException)
         {
-            // Poisoned thread: the client dies with it and is rebuilt lazily.
-            _uiaClient = null;
-            _uiaExtractor = null;
-            extraction = new UiaExtraction(UiaOutcome.NothingExtracted, null, [], true, 0, false);
+            // UIA never answered, so the focused-password check never ran:
+            // password status is UNKNOWN and pixels are off the table.
+            extraction = new UiaExtraction(
+                UiaOutcome.NothingExtracted, null, [], true, 0, false, PasswordCheckCompleted: false);
         }
         uiaWatch.Stop();
         ct.ThrowIfCancellationRequested();
 
-        if (extraction.Outcome == UiaOutcome.SensitiveBlocked ||
-            SensitiveContextGate.Evaluate(
-                extraction.Outcome == UiaOutcome.SensitiveBlocked,
-                extraction.PasswordControlsSkipped,
-                0) == GateDecision.Block)
+        if (extraction.Outcome == UiaOutcome.SensitiveBlocked)
         {
             return Result(AcquisitionOutcome.SensitiveContentBlocked, exclusion, null,
                 Timings((int)probeWatch.ElapsedMilliseconds, (int)uiaWatch.ElapsedMilliseconds, 0, total));
         }
 
-        // OCR fallback only when UIA yielded too little.
+        // OCR fallback only when UIA yielded too little text — and NEVER
+        // when the focused-password check did not complete (fail closed:
+        // a hung login dialog must not get its pixels read instead).
         var ocrWatch = Stopwatch.StartNew();
         var ocrBlocks = new List<RawBlock>();
         var usedOcr = false;
         var ocrUnavailable = false;
         var uiaTextChars = extraction.Blocks.Sum(b => b.Text.Length);
-        if (extraction.Blocks.Count < MinUsefulBlocks || uiaTextChars < MinUsefulChars)
+        if (uiaTextChars < MinUsefulChars && extraction.PasswordCheckCompleted)
         {
-            if (!OcrFallback.IsAvailable)
+            if (!_pixelStage.OcrAvailable)
             {
                 ocrUnavailable = true;
             }
             else
             {
-                var frame = WindowCapture.Capture(probe.Hwnd, OcrFallback.MaxImageDimension);
-                if (frame is not null)
+                var recognized = await _pixelStage.CaptureAndRecognizeAsync(probe.Hwnd)
+                    .ConfigureAwait(false);
+                if (recognized is not null)
                 {
-                    var ocr = await OcrFallback.RunAsync(frame).ConfigureAwait(false);
-                    if (ocr is not null)
-                    {
-                        ocrBlocks.AddRange(ocr.Blocks);
-                        usedOcr = true;
-                    }
+                    ocrBlocks.AddRange(recognized);
+                    usedOcr = true;
                 }
             }
         }
@@ -167,19 +171,32 @@ public sealed class ContextAcquisitionService(
 
         // Redact secrets in EVERYTHING before normalization/ranking.
         var redactionCount = 0;
+        var matchedPatterns = new HashSet<string>(StringComparer.Ordinal);
         RawBlock RedactBlock(RawBlock block)
         {
-            var result = redactor.Redact(block.Text);
+            var result = _redactor.Redact(block.Text);
             redactionCount += result.RedactionCount;
+            matchedPatterns.UnionWith(result.MatchedPatternNames);
             return block with { Text = result.Text };
         }
         var allBlocks = extraction.Blocks.Concat(ocrBlocks).Select(RedactBlock).ToList();
         string? selectedText = null;
         if (extraction.SelectedText is { } selection)
         {
-            var redacted = redactor.Redact(selection);
+            var redacted = _redactor.Redact(selection);
             redactionCount += redacted.RedactionCount;
+            matchedPatterns.UnionWith(redacted.MatchedPatternNames);
             selectedText = redacted.Text;
+        }
+
+        // Sensitive-content gate AFTER redaction, with the real counts: a
+        // private key or a secret-saturated screen blocks the cloud request
+        // outright — span markers alone are not enough there.
+        if (SensitiveContextGate.Evaluate(false, redactionCount, matchedPatterns) == GateDecision.Block)
+        {
+            return Result(AcquisitionOutcome.SensitiveContentBlocked, exclusion, null,
+                Timings((int)probeWatch.ElapsedMilliseconds, (int)uiaWatch.ElapsedMilliseconds,
+                    (int)ocrWatch.ElapsedMilliseconds, total));
         }
 
         var normalized = BlockNormalizer.Normalize(allBlocks);
@@ -234,5 +251,5 @@ public sealed class ContextAcquisitionService(
     private static AcquisitionTimings Timings(int probeMs, int uiaMs, int ocrMs, Stopwatch total) =>
         new(probeMs, uiaMs, ocrMs, (int)total.ElapsedMilliseconds);
 
-    public void Dispose() => _captureThread.Dispose();
+    public void Dispose() => _uiaStage.Dispose();
 }

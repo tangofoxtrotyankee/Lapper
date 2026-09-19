@@ -122,6 +122,22 @@ public class BlockRankerTests
         Assert.True(ranked.Count <= 10);
         Assert.True(ranked.Sum(b => b.Text.Length) <= 2600);
     }
+
+    [Fact]
+    public void SplitsOversizeBlocksToTheContractBound()
+    {
+        // An 8000-char document block (extractor cap) must never produce a
+        // block above the contract's 4000-char maxLength — the backend
+        // schema would reject the whole request.
+        var text = string.Join(' ', Enumerable.Repeat("word", 1600)); // 7999 chars
+        var ranked = BlockRanker.Rank([Block("document", text, 0)]);
+
+        Assert.True(ranked.Count >= 2);
+        Assert.All(ranked, b => Assert.True(b.Text.Length <= BlockRanker.MaxBlockChars));
+        Assert.All(ranked, b => Assert.Matches("^b[0-9]{1,4}$", b.Id));
+        // Content is preserved across the split, not truncated away.
+        Assert.True(ranked.Sum(b => b.Text.Length) > 7000);
+    }
 }
 
 public class OcrLineGrouperTests

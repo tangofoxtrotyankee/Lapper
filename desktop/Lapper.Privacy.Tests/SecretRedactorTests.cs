@@ -23,6 +23,23 @@ public class SecretRedactorTests
     }
 
     [Fact]
+    public void RedactsTheEntirePrivateKeyBodyNotJustTheHeader()
+    {
+        var pem = "before\n-----BEGIN RSA PRIVATE KEY-----\nkeymaterialAAAA\nBBBB\n" +
+                  "-----END RSA PRIVATE KEY-----\nafter";
+        var result = _redactor.Redact(pem);
+        Assert.DoesNotContain("keymaterial", result.Text);
+        Assert.Contains("[REDACTED:private_key_block]", result.Text);
+        Assert.Contains("before", result.Text);
+        Assert.Contains("after", result.Text);
+
+        // No END marker (key continues past the block): redact to the end.
+        var headerOnly = _redactor.Redact("x\n-----BEGIN EC PRIVATE KEY-----\nkeybodyCCCC");
+        Assert.DoesNotContain("keybodyCCCC", headerOnly.Text);
+        Assert.Contains("[REDACTED:private_key_block]", headerOnly.Text);
+    }
+
+    [Fact]
     public void RedactsJwtShapedContent()
     {
         // Fixture assembled from parts so secret scanners never see a

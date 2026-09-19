@@ -16,6 +16,7 @@ public sealed class SpeechService : IDisposable
     private readonly SpeechSynthesizer _synthesizer = new();
     private readonly MediaPlayer _player = new();
     private MediaSource? _currentSource;
+    private int _generation;
 
     /// <summary>Fires (on a non-UI thread) when playback finishes or fails.</summary>
     public event EventHandler? PlaybackEnded;
@@ -26,26 +27,48 @@ public sealed class SpeechService : IDisposable
         _player.MediaFailed += (_, _) => PlaybackEnded?.Invoke(this, EventArgs.Empty);
     }
 
-    public async Task SpeakAsync(string text)
+    /// <summary>Returns false when speech is unavailable (no voice, media failure).</summary>
+    public async Task<bool> SpeakAsync(string text)
     {
         Stop();
         if (string.IsNullOrWhiteSpace(text))
         {
-            return;
+            return false;
         }
         if (text.Length > MaxSpeechChars)
         {
             text = text[..MaxSpeechChars];
         }
 
-        var stream = await _synthesizer.SynthesizeTextToStreamAsync(text);
-        _currentSource = MediaSource.CreateFromStream(stream, stream.ContentType);
-        _player.Source = _currentSource;
-        _player.Play();
+        // Generation guard: overlapping SpeakAsync calls race at the await —
+        // whichever synthesis finishes last must not play stale text, and
+        // the loser's stream must be disposed, not leaked.
+        var generation = ++_generation;
+        try
+        {
+            var stream = await _synthesizer.SynthesizeTextToStreamAsync(text);
+            if (generation != _generation)
+            {
+                stream.Dispose();
+                return false;
+            }
+            _currentSource?.Dispose();
+            _currentSource = MediaSource.CreateFromStream(stream, stream.ContentType);
+            _player.Source = _currentSource;
+            _player.Play();
+            return true;
+        }
+        catch (Exception)
+        {
+            // Missing TTS voice or media-stack failure: read-aloud is
+            // unavailable, never fatal to the app.
+            return false;
+        }
     }
 
     public void Stop()
     {
+        _generation++;
         _player.Pause();
         _player.Source = null;
         _currentSource?.Dispose();

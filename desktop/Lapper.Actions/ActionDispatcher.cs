@@ -25,8 +25,7 @@ public sealed class ActionDispatcher(SpeechService speech)
             case "share_text": // MVP: share via clipboard (documented; no Share sheet)
                 return ClipboardService.TrySetText(text);
             case "read_aloud":
-                await speech.SpeakAsync(text);
-                return true;
+                return await speech.SpeakAsync(text);
             default:
                 return false;
         }

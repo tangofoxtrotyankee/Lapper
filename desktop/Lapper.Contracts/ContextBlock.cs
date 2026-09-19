@@ -16,4 +16,7 @@ public sealed record ContextBlock
 
     [JsonPropertyName("text")]
     public required string Text { get; init; }
+
+    /// <summary>Content-free: block text must never reach logs or output.</summary>
+    public override string ToString() => $"ContextBlock({Id}, {Role}, {Text.Length} chars)";
 }

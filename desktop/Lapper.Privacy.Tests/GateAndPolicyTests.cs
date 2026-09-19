@@ -11,15 +11,35 @@ public class GateAndPolicyTests
     {
         Assert.Equal(
             GateDecision.Block,
-            SensitiveContextGate.Evaluate(focusedElementIsPassword: true, 0, 0));
+            SensitiveContextGate.Evaluate(focusedElementIsPassword: true, 0, []));
     }
 
     [Fact]
-    public void NonPasswordContextProceeds()
+    public void NonPasswordLowRedactionContextProceeds()
     {
         Assert.Equal(
             GateDecision.Proceed,
-            SensitiveContextGate.Evaluate(focusedElementIsPassword: false, 3, 2));
+            SensitiveContextGate.Evaluate(focusedElementIsPassword: false, 2, ["aws_access_key"]));
+    }
+
+    [Fact]
+    public void PrivateKeyMatchBlocksOutright()
+    {
+        Assert.Equal(
+            GateDecision.Block,
+            SensitiveContextGate.Evaluate(
+                focusedElementIsPassword: false, 1, [SensitiveContextGate.BlockingPatternName]));
+    }
+
+    [Fact]
+    public void SecretSaturatedScreenBlocks()
+    {
+        Assert.Equal(
+            GateDecision.Block,
+            SensitiveContextGate.Evaluate(
+                focusedElementIsPassword: false,
+                SensitiveContextGate.BlockingRedactionCount,
+                ["password_assignment"]));
     }
 
     [Theory]

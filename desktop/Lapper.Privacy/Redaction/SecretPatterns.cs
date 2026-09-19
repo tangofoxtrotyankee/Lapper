@@ -30,7 +30,9 @@ public static partial class SecretPatterns
     [GeneratedRegex(@"\b(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{36,}\b|\bgithub_pat_[A-Za-z0-9_]{60,}\b")]
     private static partial Regex GitHubToken();
 
-    [GeneratedRegex(@"-----BEGIN [A-Z ]*PRIVATE KEY-----")]
+    // Whole PEM envelope; without an END marker (key continues past the
+    // block boundary) everything from the header onward is redacted.
+    [GeneratedRegex(@"-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?(?:-----END [A-Z ]*PRIVATE KEY-----|$)")]
     private static partial Regex PrivateKeyBlock();
 
     [GeneratedRegex(@"\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b")]

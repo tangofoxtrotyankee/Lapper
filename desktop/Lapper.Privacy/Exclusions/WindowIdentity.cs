@@ -9,4 +9,8 @@ public sealed record WindowIdentity(
     string ProcessName,
     int ProcessId,
     string WindowTitle,
-    string ClassName);
+    string ClassName)
+{
+    /// <summary>Content-free: the title must never reach logs or output.</summary>
+    public override string ToString() => $"WindowIdentity({ProcessName}, pid={ProcessId})";
+}

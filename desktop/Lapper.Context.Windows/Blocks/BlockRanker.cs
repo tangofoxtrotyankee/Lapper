@@ -12,6 +12,13 @@ public static class BlockRanker
     public const int DefaultMaxBlocks = 40;
     public const int DefaultMaxTotalChars = 12000;
 
+    /// <summary>
+    /// Contract bound (orient-request.schema.json blocks[].text maxLength):
+    /// blocks are split to fit so a content-rich document never produces a
+    /// request the backend schema rejects.
+    /// </summary>
+    public const int MaxBlockChars = 4000;
+
     private static readonly Dictionary<string, int> RoleWeights = new(StringComparer.Ordinal)
     {
         [ContextBlockRoles.Document] = 100,
@@ -37,7 +44,9 @@ public static class BlockRanker
     {
         var focusOrder = blocks.FirstOrDefault(b => b.HasFocus)?.TreeOrder;
 
-        var scored = blocks
+        var sized = blocks.SelectMany(SplitToContractSize).ToList();
+
+        var scored = sized
             .Select(block =>
             {
                 var score = RoleWeights.GetValueOrDefault(block.Role, 20);
@@ -80,5 +89,42 @@ public static class BlockRanker
             });
         }
         return result;
+    }
+
+    /// <summary>
+    /// Splits an oversize block (long documents, redaction-marker growth)
+    /// into contract-size chunks, breaking at whitespace where possible.
+    /// </summary>
+    private static IEnumerable<RawBlock> SplitToContractSize(RawBlock block)
+    {
+        if (block.Text.Length <= MaxBlockChars)
+        {
+            yield return block;
+            yield break;
+        }
+
+        var remaining = block.Text;
+        var first = true;
+        while (remaining.Length > 0)
+        {
+            var take = Math.Min(MaxBlockChars, remaining.Length);
+            if (take < remaining.Length)
+            {
+                var lastBreak = remaining.LastIndexOfAny([' ', '\n', '\t'], take - 1);
+                if (lastBreak > MaxBlockChars / 2)
+                {
+                    take = lastBreak + 1;
+                }
+            }
+            var chunk = remaining[..take].Trim();
+            remaining = remaining[take..];
+            if (chunk.Length > 0)
+            {
+                // Focus stays on the first chunk only, so proximity scoring
+                // is not inflated by an artificially split block.
+                yield return block with { Text = chunk, HasFocus = block.HasFocus && first };
+            }
+            first = false;
+        }
     }
 }

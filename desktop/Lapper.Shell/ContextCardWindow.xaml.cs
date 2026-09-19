@@ -183,6 +183,26 @@ public sealed partial class ContextCardWindow : Window
         };
     }
 
+    public void NotifyLocalActionFailed(string actionType)
+    {
+        StatusRow.Visibility = Visibility.Visible;
+        Spinner.IsActive = false;
+        StatusText.Text = actionType switch
+        {
+            "copy_text" or "share_text" => "Couldn't access the clipboard — try again.",
+            "read_aloud" => "Read aloud isn't available on this device.",
+            _ => "That didn't work.",
+        };
+    }
+
+    /// <summary>Status note without switching the card into an error state.</summary>
+    public void ShowStatusNote(string message)
+    {
+        StatusRow.Visibility = Visibility.Visible;
+        Spinner.IsActive = false;
+        StatusText.Text = message;
+    }
+
     // ---- cloud action result streaming ----
 
     public void BeginActionResult()
@@ -268,25 +288,48 @@ public sealed partial class ContextCardWindow : Window
         {
             return;
         }
-        QuestionBox.Text = string.Empty;
         QuestionAsked?.Invoke(this, question);
+        QuestionBox.Text = string.Empty;
     }
 
     private void OnCopyResultClicked(object sender, RoutedEventArgs e)
     {
         if (_resultTextValue.Length > 0)
         {
-            ClipboardService.TrySetText(_resultTextValue);
-            NotifyLocalActionDone("copy_text");
+            if (ClipboardService.TrySetText(_resultTextValue))
+            {
+                NotifyLocalActionDone("copy_text");
+            }
+            else
+            {
+                NotifyLocalActionFailed("copy_text");
+            }
         }
     }
 
     private async void OnReadResultClicked(object sender, RoutedEventArgs e)
     {
-        if (_resultTextValue.Length > 0)
+        if (_resultTextValue.Length == 0)
         {
-            await _actions.ExecuteLocalAsync("read_aloud", _resultTextValue);
-            NotifyLocalActionDone("read_aloud");
+            return;
+        }
+        // async void event handler: an escaping exception would crash the
+        // app, so failures surface as a status note instead.
+        try
+        {
+            var ok = await _actions.ExecuteLocalAsync("read_aloud", _resultTextValue);
+            if (ok)
+            {
+                NotifyLocalActionDone("read_aloud");
+            }
+            else
+            {
+                NotifyLocalActionFailed("read_aloud");
+            }
+        }
+        catch (Exception)
+        {
+            NotifyLocalActionFailed("read_aloud");
         }
     }
 }

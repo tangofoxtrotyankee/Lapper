@@ -17,6 +17,16 @@ public sealed record ForegroundWindowInfo(
 /// </summary>
 public static class ForegroundWindowProbe
 {
+    /// <summary>True while a previously probed window can still be captured.</summary>
+    public static bool IsWindowAlive(nint hwndRaw)
+    {
+        unsafe
+        {
+            var hwnd = new HWND((void*)hwndRaw);
+            return PInvoke.IsWindow(hwnd) && !PInvoke.IsIconic(hwnd);
+        }
+    }
+
     public static ForegroundWindowInfo? Probe()
     {
         var hwnd = PInvoke.GetForegroundWindow();

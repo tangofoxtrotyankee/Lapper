@@ -19,7 +19,8 @@ public sealed record UiaExtraction(
     IReadOnlyList<RawBlock> Blocks,
     bool TruncatedByBudget,
     int PasswordControlsSkipped,
-    bool RetriedForAccessibilityWarmup)
+    bool RetriedForAccessibilityWarmup,
+    bool PasswordCheckCompleted)
 {
     public override string ToString() =>
         $"UiaExtraction({Outcome}, blocks={Blocks.Count}, truncated={TruncatedByBudget})";
@@ -49,20 +50,25 @@ internal sealed class UiaExtractor(UiaClient client)
         var root = client.Automation.ElementFromHandleBuildCache(hwnd, client.BlockCache);
 
         // Password gate FIRST: a focused password control blocks the entire
-        // capture before any text has been read.
+        // capture before any text has been read. The FocusCache omits the
+        // Value property so a focused password's content is never fetched.
+        // If the check cannot complete, the pipeline treats password status
+        // as UNKNOWN and must not fall back to pixels (fail closed).
         var focusedIsPassword = false;
+        var passwordCheckCompleted = false;
         try
         {
-            var focused = client.Automation.GetFocusedElementBuildCache(client.BlockCache);
+            var focused = client.Automation.GetFocusedElementBuildCache(client.FocusCache);
             focusedIsPassword = focused.CachedIsPassword;
+            passwordCheckCompleted = true;
         }
         catch (COMException)
         {
-            // No focused element is fine.
+            // Could not determine focus state — leave passwordCheckCompleted false.
         }
         if (focusedIsPassword)
         {
-            return new UiaExtraction(UiaOutcome.SensitiveBlocked, null, [], false, 1, false);
+            return new UiaExtraction(UiaOutcome.SensitiveBlocked, null, [], false, 1, false, true);
         }
 
         var selectedText = TryReadSelection(root);
@@ -80,7 +86,8 @@ internal sealed class UiaExtractor(UiaClient client)
         var outcome = blocks.Count == 0 && selectedText is null
             ? UiaOutcome.NothingExtracted
             : UiaOutcome.Success;
-        return new UiaExtraction(outcome, selectedText, blocks, truncated, passwordsSkipped, retried);
+        return new UiaExtraction(
+            outcome, selectedText, blocks, truncated, passwordsSkipped, retried, passwordCheckCompleted);
     }
 
     private string? TryReadSelection(IUIAutomationElement root)

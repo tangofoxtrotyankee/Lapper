@@ -29,7 +29,12 @@ public static class BackendUrlValidator
             return false;
         }
 
-        baseUrl = uri;
+        // Normalize to a trailing slash: RFC 3986 relative resolution drops
+        // the last path segment of a non-slash-terminated base, so
+        // "https://host/api" + "v1/..." would silently lose "/api".
+        baseUrl = uri.AbsolutePath.EndsWith('/')
+            ? uri
+            : new UriBuilder(uri) { Path = uri.AbsolutePath + "/" }.Uri;
         return true;
     }
 }

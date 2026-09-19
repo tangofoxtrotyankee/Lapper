@@ -31,6 +31,19 @@ public class BackendUrlValidatorTests
     {
         Assert.False(BackendUrlValidator.TryValidate(url, out _));
     }
+
+    [Theory]
+    [InlineData("https://host.example/api", "https://host.example/api/")]
+    [InlineData("http://127.0.0.1:3000", "http://127.0.0.1:3000/")]
+    [InlineData("https://host.example/api/", "https://host.example/api/")]
+    public void NormalizesToTrailingSlashSoRelativePathsKeepThePrefix(string input, string expected)
+    {
+        // RFC 3986: new Uri(base, "v1/...") drops the last segment of a
+        // non-slash-terminated base — "/api" would silently vanish.
+        Assert.True(BackendUrlValidator.TryValidate(input, out var parsed));
+        Assert.Equal(expected, parsed!.ToString());
+        Assert.Equal(expected + "v1/context/orient", new Uri(parsed, "v1/context/orient").ToString());
+    }
 }
 
 public class SseFrameReaderTests

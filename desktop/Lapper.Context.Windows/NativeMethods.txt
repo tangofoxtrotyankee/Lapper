@@ -8,6 +8,7 @@ GetWindowTextLengthW
 GetClassNameW
 IsWindow
 IsIconic
+IsHungAppWindow
 GetWindowRect
 DwmGetWindowAttribute
 PrintWindow

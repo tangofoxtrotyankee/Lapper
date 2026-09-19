@@ -4,7 +4,12 @@ namespace Lapper.Privacy.Redaction;
 /// Result of a redaction pass. MatchedPatternNames carries pattern NAMES
 /// only — safe for flags/telemetry; never the matched text.
 /// </summary>
-public sealed record RedactionResult(string Text, int RedactionCount, IReadOnlyList<string> MatchedPatternNames);
+public sealed record RedactionResult(string Text, int RedactionCount, IReadOnlyList<string> MatchedPatternNames)
+{
+    /// <summary>Content-free: the redacted text must never reach logs.</summary>
+    public override string ToString() =>
+        $"RedactionResult(count={RedactionCount}, patterns=[{string.Join(',', MatchedPatternNames)}])";
+}
 
 public interface ISecretRedactor
 {

@@ -32,6 +32,7 @@ public sealed class LapperOrchestrator : IDisposable
     private int _session;
     private CancellationTokenSource? _cts;
     private ContextSnapshot? _lastSnapshot;
+    private ForegroundWindowInfo? _lastProbe;
 
     public LapperOrchestrator(
         SettingsService settings,
@@ -67,6 +68,21 @@ public sealed class LapperOrchestrator : IDisposable
 
         // Probe BEFORE the card takes foreground, or we'd capture Lapper.
         var probe = ForegroundWindowProbe.Probe();
+
+        // Triggered from Lapper's own UI (Refresh button, hotkey while the
+        // card has focus): the foreground window IS Lapper, which the
+        // exclusion policy would rightly block as self-capture. Re-read the
+        // window from the previous session instead, if it still exists.
+        if (probe is not null && probe.Identity.ProcessId == Environment.ProcessId)
+        {
+            probe = _lastProbe is not null && ForegroundWindowProbe.IsWindowAlive(_lastProbe.Hwnd)
+                ? _lastProbe
+                : null;
+        }
+        if (probe is not null)
+        {
+            _lastProbe = probe;
+        }
 
         var session = ++_session;
         _cts?.Cancel();
@@ -152,6 +168,7 @@ public sealed class LapperOrchestrator : IDisposable
         };
 
         var extractor = new OrientationDeltaExtractor();
+        var sawTerminal = false;
         try
         {
             await foreach (var apiEvent in _api.OrientAsync(request, ct).ConfigureAwait(false))
@@ -166,6 +183,7 @@ public sealed class LapperOrchestrator : IDisposable
                         }
                         break;
                     case ApiStreamEvent.OrientResult(var orientation):
+                        sawTerminal = true;
                         Post(session, card => card.ShowOrientation(
                             orientation,
                             ActionPolicy.FilterAllowed(orientation.SuggestedActions)));
@@ -178,6 +196,19 @@ public sealed class LapperOrchestrator : IDisposable
         }
         catch (OperationCanceledException)
         {
+            return;
+        }
+        catch (Exception)
+        {
+            Post(session, card => card.ShowError("Couldn't reach the Lapper backend.", "BACKEND_UNREACHABLE"));
+            return;
+        }
+
+        // A clean connection close (proxy idle timeout, early server end)
+        // raises no exception — without this the card would spin forever.
+        if (!sawTerminal && !ct.IsCancellationRequested)
+        {
+            Post(session, card => card.ShowError("The connection ended unexpectedly.", "STREAM_ENDED"));
         }
     }
 
@@ -191,8 +222,7 @@ public sealed class LapperOrchestrator : IDisposable
         if (ActionPolicy.KindOf(action.Type) == ActionExecutionKind.Local)
         {
             var text = _card?.CurrentReadableText ?? string.Empty;
-            _ = _actions.ExecuteLocalAsync(action.Type, text);
-            _card?.NotifyLocalActionDone(action.Type);
+            _ = RunLocalActionAsync(action.Type, text);
             return;
         }
 
@@ -205,10 +235,39 @@ public sealed class LapperOrchestrator : IDisposable
         _ = RunCloudActionAsync(action.Type, null);
     }
 
+    /// <summary>Runs on the UI thread; success/failure lands on the card.</summary>
+    private async Task RunLocalActionAsync(string actionType, string text)
+    {
+        var ok = false;
+        try
+        {
+            ok = await _actions.ExecuteLocalAsync(actionType, text);
+        }
+        catch (Exception)
+        {
+            // Local actions must never crash the shell.
+        }
+        if (ok)
+        {
+            _card?.NotifyLocalActionDone(actionType);
+        }
+        else
+        {
+            _card?.NotifyLocalActionFailed(actionType);
+        }
+    }
+
     private async Task RunCloudActionAsync(string actionType, string? question)
     {
-        if (_card is null || _lastSnapshot is null || _cts is null)
+        if (_card is null)
         {
+            return;
+        }
+        if (_lastSnapshot is null || _cts is null)
+        {
+            // The question box is visible even after a blocked/failed
+            // acquisition; say why nothing happens rather than going silent.
+            _card.ShowStatusNote("Nothing was read from this screen, so that isn't available.");
             return;
         }
         var session = _session;
@@ -235,6 +294,7 @@ public sealed class LapperOrchestrator : IDisposable
 
         _card.BeginActionResult();
         var buffer = new System.Text.StringBuilder();
+        var sawTerminal = false;
         try
         {
             await foreach (var apiEvent in _api.ActionAsync(request, ct).ConfigureAwait(false))
@@ -247,6 +307,7 @@ public sealed class LapperOrchestrator : IDisposable
                         Post(session, card => card.UpdateActionResult(visible));
                         break;
                     case ApiStreamEvent.TextResult(var text):
+                        sawTerminal = true;
                         Post(session, card => card.CompleteActionResult(text));
                         break;
                     case ApiStreamEvent.Error(var code, var message):
@@ -257,6 +318,17 @@ public sealed class LapperOrchestrator : IDisposable
         }
         catch (OperationCanceledException)
         {
+            return;
+        }
+        catch (Exception)
+        {
+            Post(session, card => card.ShowError("Couldn't reach the Lapper backend.", "BACKEND_UNREACHABLE"));
+            return;
+        }
+
+        if (!sawTerminal && !ct.IsCancellationRequested)
+        {
+            Post(session, card => card.ShowError("The connection ended unexpectedly.", "STREAM_ENDED"));
         }
     }
 

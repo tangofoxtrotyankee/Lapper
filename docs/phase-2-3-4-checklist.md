@@ -57,10 +57,10 @@ adapter (strict structured output, `store:false`), model router
 
 ## Testing
 
-- Backend: 45 vitest tests (routes, SSE, gateway, router, strict schema,
+- Backend: 72 vitest tests (routes, SSE incl. real-socket lifecycle, gateway, router, strict schema,
   injection fixtures, log canary) on ubuntu + windows CI lanes.
-- Desktop: 13 contracts + 34 shell-core + 15 api-client tests
-  (cross-platform) and 27 privacy + 21 context-windows tests
+- Desktop: 13 contracts + 34 shell-core + 18 api-client tests
+  (cross-platform) and 30 privacy + 30 context-windows tests
   (windows-latest CI).
 - Manual: `docs/phase-2-3-4-testing-guide.md`, recorded in
   `docs/test-logs/phase-2-3-4.md`.

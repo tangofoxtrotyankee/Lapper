@@ -36,6 +36,16 @@ public static class WindowCapture
     public static unsafe CapturedFrame? Capture(nint hwndRaw, int maxDimension)
     {
         var hwnd = new HWND((void*)hwndRaw);
+
+        // PrintWindow delivers WM_PRINT with SendMessage semantics and would
+        // block this thread forever against a hung ("Not Responding") target
+        // — which is exactly the state that routes the pipeline here after a
+        // UIA timeout. Skip pixels entirely for hung windows.
+        if (PInvoke.IsHungAppWindow(hwnd))
+        {
+            return null;
+        }
+
         if (!PInvoke.GetWindowRect(hwnd, out var rect))
         {
             return null;
