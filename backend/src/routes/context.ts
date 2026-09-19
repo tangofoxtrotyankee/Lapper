@@ -13,6 +13,7 @@ import { assembleActionCall, assembleOrientCall } from '../ai/prompt.js';
 import { chooseModel } from '../ai/router.js';
 import { deriveStrictSchema } from '../ai/strictSchema.js';
 import { GatewayError, type ModelGateway } from '../gateway/types.js';
+import { headerRequestId, logMeta } from '../logging/meta.js';
 import { SseWriter, errorEnvelope } from './sse.js';
 
 const strictOrientationSchema = deriveStrictSchema(orientationResultSchema);
@@ -85,7 +86,7 @@ async function handle(
     : assembleActionCall(typed as ActionRequest);
 
   if (options.config.openai.apiKey === undefined) {
-    request.log.info({ requestId, route: decision.route, status: 'model_unavailable' });
+    request.log.info(logMeta({ requestId, route: decision.route, status: 'model_unavailable' }));
     await reply
       .code(503)
       .send(
@@ -181,22 +182,19 @@ async function handle(
     sse.end();
   }
 
-  // Metadata only — never content.
-  request.log.info({
-    requestId,
-    route: decision.route,
-    model: decision.model,
-    status,
-    latencyMs,
-    inputTokens,
-    outputTokens,
-    blocks: typed.context.blocks.length,
-  });
-}
-
-function headerRequestId(request: FastifyRequest): string {
-  const header = request.headers['x-lapper-request-id'];
-  return typeof header === 'string' ? header.slice(0, 64) : 'unknown';
+  // Metadata only — never content; logMeta drops anything off-whitelist.
+  request.log.info(
+    logMeta({
+      requestId,
+      route: decision.route,
+      model: decision.model,
+      status,
+      latencyMs,
+      inputTokens,
+      outputTokens,
+      blocks: typed.context.blocks.length,
+    }),
+  );
 }
 
 function safeParse(text: string): unknown {

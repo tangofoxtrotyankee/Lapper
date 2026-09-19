@@ -9,6 +9,19 @@ import { healthRoutes } from './routes/health.js';
 import { contextRoutes } from './routes/context.js';
 import { OpenAiResponsesGateway } from './gateway/openaiResponses.js';
 import type { ModelGateway } from './gateway/types.js';
+import { headerRequestId, logMeta } from './logging/meta.js';
+
+/**
+ * Fixed client-facing messages per error class. Never forward
+ * `error.message` for client-caused errors: Node's JSON.parse SyntaxError
+ * embeds a snippet of the request body, which may contain screen content.
+ */
+const FIXED_ERROR_MESSAGES: Record<string, string> = {
+  INVALID_REQUEST: 'The request body is not valid.',
+  CONTEXT_TOO_LARGE: 'The request body is too large.',
+  UNSUPPORTED_MEDIA_TYPE: 'Requests must be application/json.',
+  INTERNAL_ERROR: 'The request failed unexpectedly.',
+};
 
 export interface BuildAppOptions {
   readonly config?: AppConfig;
@@ -43,6 +56,24 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
 
   app.register(healthRoutes);
   app.register(contextRoutes({ gateway, config }));
+
+  app.setErrorHandler((error, request, reply) => {
+    const raw = (error as { statusCode?: unknown }).statusCode;
+    const statusCode = typeof raw === 'number' && raw >= 400 ? raw : 500;
+    const code =
+      statusCode === 413
+        ? 'CONTEXT_TOO_LARGE'
+        : statusCode === 415
+          ? 'UNSUPPORTED_MEDIA_TYPE'
+          : statusCode < 500
+            ? 'INVALID_REQUEST'
+            : 'INTERNAL_ERROR';
+    const requestId = headerRequestId(request);
+    request.log.info(logMeta({ requestId, status: code, statusCode }));
+    void reply.code(statusCode).send({
+      error: { code, message: FIXED_ERROR_MESSAGES[code], requestId },
+    });
+  });
 
   return app;
 }
