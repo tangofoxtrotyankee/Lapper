@@ -1,3 +1,4 @@
+import { connect } from 'node:net';
 import { setTimeout as delay } from 'node:timers/promises';
 import { describe, expect, it } from 'vitest';
 import { buildApp } from '../src/app.js';
@@ -68,26 +69,32 @@ describe('SSE over a real socket', () => {
   });
 
   it('a client disconnect mid-stream aborts the gateway call', async () => {
-    const gateway = new SlowGateway(50); // ~2.5s if never aborted
+    const gateway = new SlowGateway(100); // ~5s if never aborted
     const app = makeApp(gateway);
     await app.listen({ port: 0, host: '127.0.0.1' });
     const { port } = app.server.address() as { port: number };
 
-    const controller = new AbortController();
-    const request = fetch(`http://127.0.0.1:${port}/v1/context/orient`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(validOrientRequest()),
-      signal: controller.signal,
-    }).catch(() => undefined);
-
-    await delay(180); // let a few deltas flow, then drop the connection
-    controller.abort();
-    await request;
+    // Raw socket instead of fetch: an aborted fetch with an unconsumed
+    // body does not reliably tear the TCP connection down on every
+    // platform, but socket.destroy() does.
+    const body = JSON.stringify(validOrientRequest());
+    const socket = connect(port, '127.0.0.1');
+    await new Promise<void>((resolve, reject) => {
+      socket.once('connect', resolve);
+      socket.once('error', reject);
+    });
+    socket.write(
+      `POST /v1/context/orient HTTP/1.1\r\n` +
+        `host: 127.0.0.1\r\ncontent-type: application/json\r\n` +
+        `content-length: ${Buffer.byteLength(body)}\r\nconnection: close\r\n\r\n${body}`,
+    );
+    await new Promise<void>((resolve) => socket.once('data', () => resolve()));
+    await delay(150); // let a couple of deltas flow mid-stream
+    socket.destroy();
 
     // The server must notice the disconnect and abort the model call.
     let waited = 0;
-    while (gateway.abortedAtTick === null && waited < 2000) {
+    while (gateway.abortedAtTick === null && waited < 4000) {
       await delay(50);
       waited += 50;
     }
