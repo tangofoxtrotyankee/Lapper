@@ -20,10 +20,13 @@ function fail(message) {
 
 // 1. OpenAPI 3.1 document
 const openapiValidator = new Validator();
-await openapiValidator.addSpecRef(
-  join(contractsDir, 'orientation.schema.json'),
-  './orientation.schema.json',
-);
+for (const name of [
+  'orientation.schema.json',
+  'orient-request.schema.json',
+  'action-request.schema.json',
+]) {
+  await openapiValidator.addSpecRef(join(contractsDir, name), `./${name}`);
+}
 const openapiResult = await openapiValidator.validate(join(contractsDir, 'openapi.yaml'));
 if (openapiResult.valid) {
   console.log(`ok: openapi.yaml is valid OpenAPI ${openapiValidator.version}`);

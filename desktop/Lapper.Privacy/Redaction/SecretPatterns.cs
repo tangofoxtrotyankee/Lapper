@@ -17,8 +17,11 @@ public static partial class SecretPatterns
         new("private_key_block", PrivateKeyBlock()),
         new("jwt", Jwt()),
         new("openai_key", OpenAiKey()),
-        new("password_assignment", PasswordAssignment()),
+        // Order matters: the connection-string form must run before the general
+        // password-assignment pattern, whose greedy match would otherwise consume
+        // "Pwd=...;Rest=of;String" whole and mislabel it.
         new("connection_string_secret", ConnectionStringSecret()),
+        new("password_assignment", PasswordAssignment()),
     ];
 
     [GeneratedRegex(@"\bAKIA[0-9A-Z]{16}\b")]

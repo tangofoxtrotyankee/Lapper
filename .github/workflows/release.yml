@@ -1,0 +1,75 @@
+name: Release (MSIX)
+
+# Builds an installable, self-signed MSIX package of Lapper.
+# Trigger manually from the Actions tab (workflow_dispatch); the artifact
+# contains the .msix, the .cer to trust, an install script and checksums.
+# The signing certificate is generated fresh per run — dev/alpha releases
+# only; production signing uses a controlled identity (docs/08).
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  msix:
+    name: Build installable MSIX (x64, self-contained)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Create self-signed signing certificate
+        id: cert
+        shell: pwsh
+        run: |
+          $password = [Guid]::NewGuid().ToString("N")
+          $cert = New-SelfSignedCertificate -Type Custom `
+            -Subject "CN=Lapper Development" `
+            -KeyUsage DigitalSignature `
+            -FriendlyName "Lapper Dev Signing" `
+            -CertStoreLocation "Cert:\CurrentUser\My" `
+            -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3", "2.5.29.19={text}")
+          $pfxPath = Join-Path $env:RUNNER_TEMP "lapper-dev.pfx"
+          $cerPath = Join-Path $env:RUNNER_TEMP "Lapper-Dev.cer"
+          Export-PfxCertificate -Cert $cert -FilePath $pfxPath -Password (ConvertTo-SecureString $password -AsPlainText -Force) | Out-Null
+          Export-Certificate -Cert $cert -FilePath $cerPath | Out-Null
+          "pfx=$pfxPath" >> $env:GITHUB_OUTPUT
+          "cer=$cerPath" >> $env:GITHUB_OUTPUT
+          "password=$password" >> $env:GITHUB_OUTPUT
+
+      - name: Build signed MSIX
+        shell: pwsh
+        run: |
+          dotnet build desktop/Lapper.Shell/Lapper.Shell.csproj -c Release -p:Platform=x64 `
+            -p:SelfContained=true `
+            -p:WindowsAppSDKSelfContained=true `
+            -p:GenerateAppxPackageOnBuild=true `
+            -p:AppxPackageSigningEnabled=true `
+            -p:PackageCertificateKeyFile="${{ steps.cert.outputs.pfx }}" `
+            -p:PackageCertificatePassword="${{ steps.cert.outputs.password }}" `
+            -p:AppxPackageDir="$env:GITHUB_WORKSPACE\artifacts\"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Assemble install bundle
+        shell: pwsh
+        run: |
+          $msix = Get-ChildItem -Path artifacts -Recurse -Filter *.msix | Select-Object -First 1
+          if ($null -eq $msix) { Write-Error "No .msix produced"; exit 1 }
+          New-Item -ItemType Directory -Path bundle | Out-Null
+          Copy-Item $msix.FullName bundle\Lapper.msix
+          Copy-Item "${{ steps.cert.outputs.cer }}" bundle\Lapper-Dev.cer
+          Copy-Item scripts\Install-Lapper.ps1 bundle\Install-Lapper.ps1
+          Copy-Item INSTALL.md bundle\INSTALL.md
+          Get-FileHash bundle\Lapper.msix, bundle\Lapper-Dev.cer -Algorithm SHA256 |
+            ForEach-Object { "$($_.Hash)  $(Split-Path $_.Path -Leaf)" } |
+            Set-Content bundle\SHA256SUMS.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lapper-msix-x64
+          path: bundle/
+          retention-days: 30
