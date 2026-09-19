@@ -133,4 +133,23 @@ describe('SSE chunk parser', () => {
     expect(frames[0]!.event).toBe('response.output_text.delta');
     expect(JSON.parse(frames[2]!.data)).toMatchObject({ type: 'response.completed' });
   });
+
+  it('parses CRLF-framed streams (SSE spec permits CR/CRLF line endings)', () => {
+    const frames: { event: string; data: string }[] = [];
+    const buffer = { pending: '' };
+    const stream =
+      'event: response.output_text.delta\r\ndata: {"delta":"Hi"}\r\n\r\n' +
+      'event: response.completed\r\ndata: {"done":true}\r\n\r\n';
+    // Chunk size 3 forces CRLF pairs to split across chunk boundaries.
+    for (let i = 0; i < stream.length; i += 3) {
+      for (const frame of parseSseChunk(buffer, stream.slice(i, i + 3))) {
+        frames.push(frame);
+      }
+    }
+    expect(frames).toHaveLength(2);
+    expect(frames[0]!.event).toBe('response.output_text.delta');
+    expect(JSON.parse(frames[0]!.data)).toEqual({ delta: 'Hi' });
+    expect(frames[1]!.event).toBe('response.completed');
+    expect(buffer.pending).toBe('');
+  });
 });

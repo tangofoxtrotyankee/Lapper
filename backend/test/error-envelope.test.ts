@@ -46,7 +46,7 @@ describe('error responses never echo request content', () => {
     const { app, lines } = appWithSink();
     const payload = validOrientRequest();
     (payload['context'] as { selectedText?: string }).selectedText =
-      CANARY + 'x'.repeat(600 * 1024);
+      CANARY + 'x'.repeat(700 * 1024);
     const response = await app.inject({
       method: 'POST',
       url: '/v1/context/orient',

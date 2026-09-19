@@ -16,7 +16,16 @@ interface SseFrame {
 
 /** Incremental SSE parser; exported for unit tests. */
 export function* parseSseChunk(buffer: { pending: string }, chunk: string): Generator<SseFrame> {
-  buffer.pending += chunk;
+  // The SSE spec permits CRLF and lone-CR line endings; normalize to LF.
+  // A trailing CR may be half of a CRLF split across chunks, so hold it
+  // back until the next chunk before normalizing.
+  let combined = buffer.pending + chunk;
+  let heldCr = '';
+  if (combined.endsWith('\r')) {
+    heldCr = '\r';
+    combined = combined.slice(0, -1);
+  }
+  buffer.pending = combined.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
   let separatorIndex;
   while ((separatorIndex = buffer.pending.indexOf('\n\n')) !== -1) {
     const rawFrame = buffer.pending.slice(0, separatorIndex);
@@ -34,6 +43,7 @@ export function* parseSseChunk(buffer: { pending: string }, chunk: string): Gene
       yield { event, data: dataLines.join('\n') };
     }
   }
+  buffer.pending += heldCr;
 }
 
 export class OpenAiResponsesGateway implements ModelGateway {

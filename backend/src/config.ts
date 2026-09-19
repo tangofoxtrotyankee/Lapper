@@ -27,7 +27,10 @@ export interface AppConfig {
 }
 
 const DEFAULT_PORT = 3000;
-const DEFAULT_BODY_LIMIT_BYTES = 512 * 1024;
+// Must comfortably exceed the worst-case schema-valid payload: 120 blocks ×
+// 4000 chars + 20k selectedText + 30k ocrText + JSON overhead ≈ 540 KB. A
+// contract-conformant request must never be rejected by the transport limit.
+const DEFAULT_BODY_LIMIT_BYTES = 640 * 1024;
 const DEFAULT_MODEL_TIMEOUT_MS = 60_000;
 const DEFAULT_MAX_OUTPUT_TOKENS = 2048;
 

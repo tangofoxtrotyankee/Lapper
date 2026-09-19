@@ -100,12 +100,21 @@ async function handle(
   }
 
   const abort = new AbortController();
-  request.raw.on('close', () => {
-    abort.abort();
-  });
 
   reply.hijack();
   const sse = new SseWriter(reply);
+
+  // Client-disconnect cancellation. This must watch the RESPONSE, not the
+  // request: request.raw 'close' fires when the request message completes
+  // (body fully consumed — i.e. immediately, before the handler runs),
+  // which would abort every model call. The response 'close' fires when
+  // the connection ends; writableEnded distinguishes our own end() from a
+  // premature client disconnect.
+  reply.raw.on('close', () => {
+    if (!reply.raw.writableEnded) {
+      abort.abort();
+    }
+  });
 
   let inputTokens = 0;
   let outputTokens = 0;
