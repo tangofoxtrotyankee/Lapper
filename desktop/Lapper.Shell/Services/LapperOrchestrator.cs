@@ -33,6 +33,8 @@ public sealed class LapperOrchestrator : IDisposable
     private CancellationTokenSource? _cts;
     private ContextSnapshot? _lastSnapshot;
     private ForegroundWindowInfo? _lastProbe;
+    private int _actionRun;
+    private CancellationTokenSource? _actionCts;
 
     public LapperOrchestrator(
         SettingsService settings,
@@ -93,10 +95,14 @@ public sealed class LapperOrchestrator : IDisposable
         _lastSnapshot = null;
 
         _card.BeginSession();
-        _card.ShowCard();
+        // Passive show: the card must NOT take focus yet, or the UIA
+        // password gate would examine Lapper's own card instead of the
+        // target window. Focus moves to the card after acquisition.
+        _card.ShowCardPassive();
 
         if (probe is null)
         {
+            _card.ActivateForInput();
             _card.ShowBlocked("No readable window is in the foreground.");
             return;
         }
@@ -112,7 +118,11 @@ public sealed class LapperOrchestrator : IDisposable
         }
         catch (Exception)
         {
-            Post(session, card => card.ShowError("Could not read this screen.", "CAPTURE_FAILED"));
+            Post(session, card =>
+            {
+                card.ActivateForInput();
+                card.ShowError("Could not read this screen.", "CAPTURE_FAILED");
+            });
             return;
         }
 
@@ -120,6 +130,7 @@ public sealed class LapperOrchestrator : IDisposable
         {
             return;
         }
+        _card.ActivateForInput();
 
         switch (result.Outcome)
         {
@@ -271,7 +282,14 @@ public sealed class LapperOrchestrator : IDisposable
             return;
         }
         var session = _session;
-        var ct = _cts.Token;
+
+        // One cloud action at a time: a new one cancels and supersedes the
+        // stream still writing to the shared result panel.
+        var run = ++_actionRun;
+        _actionCts?.Cancel();
+        _actionCts?.Dispose();
+        _actionCts = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token);
+        var ct = _actionCts.Token;
 
         var request = new Contracts.ActionRequest
         {
@@ -304,14 +322,14 @@ public sealed class LapperOrchestrator : IDisposable
                     case ApiStreamEvent.Delta(var text):
                         buffer.Append(text);
                         var visible = buffer.ToString();
-                        Post(session, card => card.UpdateActionResult(visible));
+                        PostAction(session, run, card => card.UpdateActionResult(visible));
                         break;
                     case ApiStreamEvent.TextResult(var text):
                         sawTerminal = true;
-                        Post(session, card => card.CompleteActionResult(text));
+                        PostAction(session, run, card => card.CompleteActionResult(text));
                         break;
                     case ApiStreamEvent.Error(var code, var message):
-                        Post(session, card => card.ShowError(message, code));
+                        PostAction(session, run, card => card.ShowError(message, code));
                         return;
                 }
             }
@@ -328,12 +346,13 @@ public sealed class LapperOrchestrator : IDisposable
 
         if (!sawTerminal && !ct.IsCancellationRequested)
         {
-            Post(session, card => card.ShowError("The connection ended unexpectedly.", "STREAM_ENDED"));
+            PostAction(session, run, card => card.ShowError("The connection ended unexpectedly.", "STREAM_ENDED"));
         }
     }
 
     public void CancelActiveSession()
     {
+        _actionCts?.Cancel();
         _cts?.Cancel();
         _actions.StopSpeech();
     }
@@ -370,8 +389,22 @@ public sealed class LapperOrchestrator : IDisposable
         });
     }
 
+    /// <summary>A superseded cloud action's late events never repaint the panel.</summary>
+    private void PostAction(int session, int run, Action<ContextCardWindow> update)
+    {
+        _dispatcher.TryEnqueue(() =>
+        {
+            if (session == _session && run == _actionRun && _card is not null)
+            {
+                update(_card);
+            }
+        });
+    }
+
     public void Dispose()
     {
+        _actionCts?.Cancel();
+        _actionCts?.Dispose();
         _cts?.Cancel();
         _cts?.Dispose();
         _httpClient.Dispose();

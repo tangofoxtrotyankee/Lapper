@@ -238,6 +238,20 @@ public sealed partial class ContextCardWindow : Window
         Activate();
     }
 
+    /// <summary>
+    /// Shows the card WITHOUT taking keyboard focus. Used while acquisition
+    /// runs: the target window must stay focused or the UIA password gate
+    /// would examine Lapper's own card instead of the probed window.
+    /// </summary>
+    public void ShowCardPassive()
+    {
+        PositionAboveBottomRight();
+        AppWindow.Show(activateWindow: false);
+    }
+
+    /// <summary>Takes focus once capture is over, so Esc and buttons work.</summary>
+    public void ActivateForInput() => Activate();
+
     public void HideCard()
     {
         AppWindow.Hide();

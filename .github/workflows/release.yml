@@ -48,6 +48,18 @@ jobs:
           "cer=$cerPath" >> $env:GITHUB_OUTPUT
           "thumbprint=$($cert.Thumbprint)" >> $env:GITHUB_OUTPUT
 
+      - name: Stamp package version
+        shell: pwsh
+        run: |
+          # Monotonically increasing version so Add-AppxPackage treats each
+          # new bundle as an upgrade (same-version packages won't install
+          # over an existing one).
+          $manifestPath = 'desktop/Lapper.Shell/Package.appxmanifest'
+          $xml = [xml](Get-Content $manifestPath -Raw)
+          $xml.Package.Identity.Version = "0.2.${{ github.run_number }}.0"
+          $xml.Save((Resolve-Path $manifestPath))
+          Write-Host "Package version: $($xml.Package.Identity.Version)"
+
       - name: Build signed MSIX
         shell: pwsh
         run: |
