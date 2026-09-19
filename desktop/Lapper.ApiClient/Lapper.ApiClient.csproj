@@ -1,11 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
-    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <!-- Cross-platform on purpose: pure HttpClient/SSE logic with no
+         Windows dependency, so its tests run on Linux and Windows alike. -->
+    <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>Lapper.ApiClient</RootNamespace>
-    <Platforms>x64</Platforms>
-    <Description>Authentication, REST/SSE calls, retry/cancellation, error mapping. Implemented from Phase 3.</Description>
+    <Platforms>AnyCPU;x64</Platforms>
+    <Description>REST/SSE client for the Lapper backend: retry/cancellation, typed stream events, error mapping. Holds no provider secrets.</Description>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,0 +1,8 @@
+# Known-fake test fixtures already in commit history.
+# Each entry is commit:file:rule:line. The fixture below was a deliberately
+# fake JWT ({"alg":"HS256"}.{"sub":"1234"}.garbage) used to test Lapper's own
+# secret redactor; the source has since been changed to assemble the fixture
+# from parts so scanners never see a token-shaped literal again.
+89f2d7b789f50ad50990343ad17b22de03b382f3:desktop/Lapper.Privacy.Tests/SecretRedactorTests.cs:jwt:14
+# Fake PEM fixture (marker + "keymaterialAAAA"), since rebuilt from parts.
+6f11ce534bdf036db5c8122ff1c7cd6a7369f0cc:desktop/Lapper.Privacy.Tests/SecretRedactorTests.cs:private-key:28

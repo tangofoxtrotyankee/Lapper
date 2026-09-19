@@ -51,6 +51,24 @@ public sealed class SettingsService : IDisposable
         }
     }
 
+    public const string DefaultBackendUrl = "http://127.0.0.1:3000/";
+
+    /// <summary>Validated by the caller via BackendUrlValidator before saving.</summary>
+    public string BackendUrl
+    {
+        get => _store.GetString(SettingsKeys.BackendUrl) ?? DefaultBackendUrl;
+        set => _store.SetString(SettingsKeys.BackendUrl, value);
+    }
+
+    /// <summary>User-excluded process names (comma separated exe names).</summary>
+    public IReadOnlyCollection<string> UserExcludedApps
+    {
+        get =>
+            (_store.GetString(SettingsKeys.UserExcludedApps) ?? string.Empty)
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        set => _store.SetString(SettingsKeys.UserExcludedApps, string.Join(',', value));
+    }
+
     public ShortcutGesture Gesture
     {
         get => ShortcutGesture.TryParse(_store.GetString(SettingsKeys.ShortcutGesture), out var gesture)

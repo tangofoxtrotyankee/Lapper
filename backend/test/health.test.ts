@@ -27,7 +27,7 @@ describe('health routes', () => {
   });
 
   it('rejects request bodies above the configured bound', async () => {
-    const oversized = 'x'.repeat(300 * 1024);
+    const oversized = 'x'.repeat(700 * 1024);
     const response = await app.inject({
       method: 'POST',
       url: '/health/live',

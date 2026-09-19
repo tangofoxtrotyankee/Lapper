@@ -7,4 +7,6 @@ public static class SettingsKeys
     public const string PillY = "pill.y";
     public const string PillVisible = "pill.visible";
     public const string ShortcutGesture = "shortcut.gesture";
+    public const string BackendUrl = "backend.url";
+    public const string UserExcludedApps = "privacy.excluded_apps";
 }

@@ -9,10 +9,11 @@
         BorderThickness="1"
         CornerRadius="12"
         KeyDown="OnRootKeyDown">
-        <Grid Margin="16" RowSpacing="12">
+        <Grid Margin="16" RowSpacing="10">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
@@ -21,59 +22,92 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <TextBlock
                     Text="Lapper"
                     Style="{StaticResource SubtitleTextBlockStyle}"
                     VerticalAlignment="Center" />
-                <Button
-                    x:Name="ExpandButton"
+                <CheckBox
+                    x:Name="DeepToggle"
                     Grid.Column="1"
-                    Content="Expand"
-                    Click="OnExpandClicked" />
-                <Button Grid.Column="2" Content="Hide" Click="OnHideClicked" />
+                    Content="Deep"
+                    MinWidth="0"
+                    VerticalAlignment="Center"
+                    ToolTipService.ToolTip="Use the deep model for complex content" />
+                <Button x:Name="RefreshButton" Grid.Column="2" Content="&#xE72C;" FontFamily="Segoe MDL2 Assets" Click="OnRefreshClicked" ToolTipService.ToolTip="Re-read this screen" />
+                <Button Grid.Column="3" Content="&#xE711;" FontFamily="Segoe MDL2 Assets" Click="OnHideClicked" ToolTipService.ToolTip="Hide (Esc)" />
             </Grid>
 
-            <Grid Grid.Row="1">
-                <StackPanel x:Name="LoadingState" Spacing="8" Visibility="Collapsed">
-                    <ProgressRing IsActive="True" Width="28" Height="28" HorizontalAlignment="Left" />
-                    <TextBlock Text="Reading this screen…" />
-                </StackPanel>
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="10">
+                    <StackPanel x:Name="StatusRow" Orientation="Horizontal" Spacing="8">
+                        <ProgressRing x:Name="Spinner" IsActive="False" Width="20" Height="20" />
+                        <TextBlock
+                            x:Name="StatusText"
+                            VerticalAlignment="Center"
+                            TextWrapping="Wrap"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
 
-                <StackPanel x:Name="ErrorState" Spacing="8" Visibility="Collapsed">
-                    <TextBlock Text="Something went wrong" FontWeight="SemiBold" />
                     <TextBlock
-                        x:Name="ErrorMessage"
-                        Text="Lapper couldn't complete that. Try again."
-                        TextWrapping="Wrap" />
-                </StackPanel>
-
-                <StackPanel x:Name="SuccessState" Spacing="8" Visibility="Collapsed">
-                    <TextBlock
-                        Text="Phase 1 shell preview — screen understanding arrives in Phase 3."
-                        FontWeight="SemiBold"
-                        TextWrapping="Wrap" />
-                    <TextBlock
-                        Text="When live, a one-sentence orientation about your active window will stream here, followed by suggested actions."
+                        x:Name="OrientationText"
                         TextWrapping="Wrap"
+                        IsTextSelectionEnabled="True"
+                        FontSize="16"
+                        Visibility="Collapsed" />
+
+                    <TextBlock
+                        x:Name="SummaryText"
+                        TextWrapping="Wrap"
+                        IsTextSelectionEnabled="True"
+                        Visibility="Collapsed"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+
+                    <StackPanel x:Name="FactsPanel" Spacing="4" Visibility="Collapsed" />
+
+                    <TextBlock
+                        x:Name="WarningsText"
+                        TextWrapping="Wrap"
+                        Visibility="Collapsed"
+                        Foreground="{ThemeResource SystemFillColorCautionBrush}" />
+
+                    <StackPanel x:Name="ResultPanel" Spacing="6" Visibility="Collapsed">
+                        <TextBlock Text="Result" FontWeight="SemiBold" />
+                        <TextBlock
+                            x:Name="ResultText"
+                            TextWrapping="Wrap"
+                            IsTextSelectionEnabled="True" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button x:Name="CopyResultButton" Content="Copy" Click="OnCopyResultClicked" IsEnabled="False" />
+                            <Button x:Name="ReadResultButton" Content="Read aloud" Click="OnReadResultClicked" IsEnabled="False" />
+                        </StackPanel>
+                    </StackPanel>
                 </StackPanel>
-            </Grid>
+            </ScrollViewer>
 
             <StackPanel
-                x:Name="StatePreviewRow"
+                x:Name="ActionsPanel"
                 Grid.Row="2"
                 Orientation="Horizontal"
                 Spacing="8"
-                Visibility="Collapsed">
-                <TextBlock
-                    Text="Preview states:"
-                    VerticalAlignment="Center"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                <Button Content="Loading" Click="OnPreviewLoading" />
-                <Button Content="Error" Click="OnPreviewError" />
-                <Button Content="Success" Click="OnPreviewSuccess" />
-            </StackPanel>
+                Visibility="Collapsed" />
+
+            <Grid Grid.Row="3" ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBox
+                    x:Name="QuestionBox"
+                    PlaceholderText="Ask about this screen…"
+                    KeyDown="OnQuestionKeyDown" />
+                <Button
+                    x:Name="AskButton"
+                    Grid.Column="1"
+                    Content="Ask"
+                    Click="OnAskClicked" />
+            </Grid>
         </Grid>
     </Border>
 </Window>

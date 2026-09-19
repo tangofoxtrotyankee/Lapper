@@ -1,11 +1,11 @@
 openapi: 3.1.0
 info:
   title: Lapper API
-  version: 0.1.0
+  version: 0.2.0
   description: >
-    Lapper backend API contract. Phase 0 defines health endpoints and the
-    orientation result schema only; /v1 endpoints are added in later phases
-    per docs/04-api-contract.md.
+    Lapper backend API contract. Health endpoints plus the Phase 3 context
+    endpoints (orientation and cloud actions), which stream Server-Sent
+    Events per docs/04-api-contract.md.
 servers:
   - url: http://127.0.0.1:3000
     description: Local development
@@ -32,7 +32,95 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthStatus'
+  /v1/context/orient:
+    post:
+      operationId: postContextOrient
+      summary: Stream a one-sentence orientation for the captured screen context
+      description: >
+        Validates the request against orient-request.schema.json, then streams
+        Server-Sent Events: `accepted`, one or more `orientation.delta`
+        (fragments of the structured JSON output), `orientation.complete`
+        (the full OrientationResult), optional `usage`, and `error` on
+        failure. The connection closes when the stream ends. Screen content
+        in the request is treated as untrusted data, never as instructions.
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './orient-request.schema.json'
+      responses:
+        '200':
+          description: SSE stream (text/event-stream).
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        '400':
+          description: Request failed schema validation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: AI is not configured (no model API key on the server).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /v1/context/action:
+    post:
+      operationId: postContextAction
+      summary: Stream the result of an allowlisted cloud action
+      description: >
+        Executes one of the allowlisted cloud action types (draft_text,
+        extract_facts, ask_question) against the supplied screen context.
+        Validates against action-request.schema.json and streams `accepted`,
+        `result` deltas as `orientation.delta`-style text events, `result`
+        completion, optional `usage`, and `error` — same SSE conventions as
+        /v1/context/orient. Local-only actions (copy_text, read_aloud,
+        share_text) never reach this endpoint.
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './action-request.schema.json'
+      responses:
+        '200':
+          description: SSE stream (text/event-stream).
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        '400':
+          description: Request failed schema validation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: AI is not configured (no model API key on the server).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
 components:
+  parameters:
+    RequestId:
+      name: X-Lapper-Request-Id
+      in: header
+      required: false
+      description: >
+        Client-supplied request correlation id (UUID). Echoed in error
+        envelopes and operational logs; logs contain metadata only.
+      schema:
+        type: string
+        format: uuid
   schemas:
     HealthStatus:
       type: object

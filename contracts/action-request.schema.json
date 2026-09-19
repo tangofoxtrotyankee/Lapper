@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lapper.app/schemas/action-request.json",
+  "title": "ActionRequest",
+  "description": "Request body for POST /v1/context/action. Executes an AI transformation, never an OS action. Only allowlisted cloud action types are accepted; the desktop never sends raw model instructions.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["requestId", "action", "application", "context", "client"],
+  "properties": {
+    "requestId": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "type": "string", "enum": ["draft_text", "extract_facts", "ask_question"] },
+        "question": { "type": ["string", "null"], "maxLength": 2000 }
+      }
+    },
+    "application": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["processName", "category"],
+      "properties": {
+        "processName": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "windowTitle": { "type": ["string", "null"], "maxLength": 500 },
+        "category": {
+          "type": "string",
+          "enum": ["email", "browser", "document", "code", "chat", "pdf", "terminal", "files", "other"]
+        }
+      }
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["blocks", "imageIncluded"],
+      "properties": {
+        "selectedText": { "type": ["string", "null"], "maxLength": 20000 },
+        "blocks": {
+          "type": "array",
+          "maxItems": 120,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "role", "text"],
+            "properties": {
+              "id": { "type": "string", "pattern": "^b[0-9]{1,4}$" },
+              "role": { "type": "string", "minLength": 1, "maxLength": 60 },
+              "text": { "type": "string", "minLength": 1, "maxLength": 4000 }
+            }
+          }
+        },
+        "ocrText": { "type": ["string", "null"], "maxLength": 30000 },
+        "imageIncluded": { "type": "boolean", "const": false }
+      }
+    },
+    "options": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "deep": { "type": "boolean" }
+      }
+    },
+    "client": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "capabilities"],
+      "properties": {
+        "version": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "capabilities": {
+          "type": "array",
+          "maxItems": 10,
+          "items": { "type": "string", "enum": ["uia", "local_ocr", "local_tts"] }
+        }
+      }
+    }
+  }
+}

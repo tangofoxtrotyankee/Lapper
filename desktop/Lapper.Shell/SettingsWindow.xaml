@@ -20,6 +20,29 @@
                 Visibility="Collapsed" />
         </StackPanel>
 
+        <StackPanel Spacing="4">
+            <TextBlock Text="Backend URL" FontWeight="SemiBold" />
+            <TextBlock
+                Text="Where your Lapper backend runs. http is only allowed for this computer (localhost); anything remote must be https."
+                TextWrapping="Wrap"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            <TextBox x:Name="BackendUrlBox" PlaceholderText="http://127.0.0.1:3000" />
+            <TextBlock
+                x:Name="BackendUrlFeedback"
+                Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                TextWrapping="Wrap"
+                Visibility="Collapsed" />
+        </StackPanel>
+
+        <StackPanel Spacing="4">
+            <TextBlock Text="Never look at these apps" FontWeight="SemiBold" />
+            <TextBlock
+                Text="Comma-separated program names, e.g. mybank.exe, privatediary.exe. Password managers and Windows security prompts are always excluded."
+                TextWrapping="Wrap"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            <TextBox x:Name="ExcludedAppsBox" PlaceholderText="app1.exe, app2.exe" />
+        </StackPanel>
+
         <ToggleSwitch x:Name="PillToggle" Header="Show the floating pill" />
 
         <ToggleSwitch

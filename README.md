@@ -45,28 +45,41 @@ This repository pack is designed to be handed directly to Claude Code before imp
 - All state-changing actions require allowlisted types and explicit policy checks.
 - No vector database, Redis, microservices, autonomous agent framework or browser automation in MVP.
 
+## Installing / running it
+
+See `INSTALL.md`: install the MSIX from the "Release (MSIX)" workflow
+artifact, run the backend with your OpenAI key, press **Ctrl+Alt+L**.
+
 ## Repository layout
 
-- `desktop/` — Windows client solution (`Lapper.slnx`, WinUI 3 / .NET 10).
+- `desktop/` — Windows client solution (`Lapper.slnx`, WinUI 3 / .NET 10):
+  shell (tray, pill, card), context engine (UIA/OCR/capture), privacy
+  (exclusions, redaction), actions, API client, shared contracts.
   Build on Windows: `dotnet build desktop/Lapper.slnx -p:Platform=x64`.
-  Cross-platform contract tests: `dotnet test desktop/Lapper.Contracts.Tests`.
-- `backend/` — Fastify 5 / TypeScript backend. `npm ci && npm test`; start
-  with `npm run dev` (no secrets required; `/health/live` returns 200).
-- `contracts/` — OpenAPI 3.1 document, orientation JSON schema and shared
-  good/bad fixtures. Validate: `npm run validate:contracts` (from `backend/`).
+  Cross-platform tests: `dotnet test desktop/Lapper.Shell.Core.Tests`
+  (also `Lapper.Contracts.Tests`, `Lapper.ApiClient.Tests`).
+- `backend/` — Fastify 5 / TypeScript backend: `/v1/context/orient` and
+  `/v1/context/action` (SSE streaming), ModelGateway → OpenAI Responses
+  API (`store:false`). `npm ci && npm test`; start with `npm run dev`
+  (boots without secrets; `/health/live` returns 200, AI endpoints need
+  `OPENAI_API_KEY` in `.env`).
+- `contracts/` — OpenAPI 3.1 document, orientation/orient-request/
+  action-request JSON schemas and shared good/bad fixtures. Validate:
+  `npm run validate:contracts` (from `backend/`).
 - `docs/adr/` — architecture decision records (see `CLAUDE.md` ADR policy).
-- `docs/phase-0-testing-guide.md` — how to verify Phase 0 by hand; record
-  results in `docs/test-logs/phase-0.md`.
-- `.github/workflows/` — CI (backend, contracts, Windows desktop build,
-  gitleaks secret scan, dependency review) and CodeQL.
+- `docs/phase-*-testing-guide.md` — how to verify each phase by hand;
+  record results in `docs/test-logs/`.
+- `.github/workflows/` — CI (backend, contracts, Windows desktop build +
+  tests, gitleaks secret scan, dependency review), CodeQL, and the manual
+  Release (MSIX) packaging workflow.
 
 ## Phases
 
-- Phase 0: repo, tooling, contracts, build pipeline
-- Phase 1: native Windows shell and floating control
-- Phase 2: local screen context engine
-- Phase 3: AI orientation loop
-- Phase 4: core actions and local TTS
+- Phase 0: repo, tooling, contracts, build pipeline — **done**
+- Phase 1: native Windows shell and floating control — **done**
+- Phase 2: local screen context engine — **built, awaiting manual acceptance**
+- Phase 3: AI orientation loop — **built, awaiting manual acceptance**
+- Phase 4: core actions and local TTS — **built, awaiting manual acceptance**
 - Phase 5: accounts, database and usage controls
 - Phase 6: security hardening and privacy controls
 - Phase 7: Laps and product configuration

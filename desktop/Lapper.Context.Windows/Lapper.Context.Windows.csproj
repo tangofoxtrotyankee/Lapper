@@ -5,7 +5,19 @@
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <RootNamespace>Lapper.Context.Windows</RootNamespace>
     <Platforms>x64</Platforms>
-    <Description>Foreground window detection, UI Automation extraction, selection retrieval, OCR and screenshot fallback. Implemented from Phase 2.</Description>
+    <!-- CsWin32-generated interop uses pointers in some signatures. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Description>Foreground window detection, UI Automation extraction, selection retrieval, local OCR and active-window screenshot fallback. Screen content is captured only after an explicit user trigger and never persisted.</Description>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Compile-time-only source generator (Microsoft win32metadata); no runtime payload ships. -->
+    <PackageReference Include="Microsoft.Windows.CsWin32" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Lapper.Contracts\Lapper.Contracts.csproj" />
+    <ProjectReference Include="..\Lapper.Privacy\Lapper.Privacy.csproj" />
+  </ItemGroup>
 
 </Project>

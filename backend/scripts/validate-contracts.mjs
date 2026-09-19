@@ -20,10 +20,13 @@ function fail(message) {
 
 // 1. OpenAPI 3.1 document
 const openapiValidator = new Validator();
-await openapiValidator.addSpecRef(
-  join(contractsDir, 'orientation.schema.json'),
-  './orientation.schema.json',
-);
+for (const name of [
+  'orientation.schema.json',
+  'orient-request.schema.json',
+  'action-request.schema.json',
+]) {
+  await openapiValidator.addSpecRef(join(contractsDir, name), `./${name}`);
+}
 const openapiResult = await openapiValidator.validate(join(contractsDir, 'openapi.yaml'));
 if (openapiResult.valid) {
   console.log(`ok: openapi.yaml is valid OpenAPI ${openapiValidator.version}`);
@@ -31,7 +34,7 @@ if (openapiResult.valid) {
   fail(`openapi.yaml invalid: ${JSON.stringify(openapiResult.errors, null, 2)}`);
 }
 
-// 2. Orientation schema compiles
+// 2. Contract schemas compile
 const ajv = new Ajv2020({ allErrors: true, strict: true });
 addFormats(ajv);
 const schema = JSON.parse(readFileSync(join(contractsDir, 'orientation.schema.json'), 'utf8'));
@@ -41,6 +44,15 @@ try {
   console.log('ok: orientation.schema.json compiles (JSON Schema 2020-12, strict)');
 } catch (error) {
   fail(`orientation.schema.json does not compile: ${String(error)}`);
+}
+
+for (const name of ['orient-request.schema.json', 'action-request.schema.json']) {
+  try {
+    ajv.compile(JSON.parse(readFileSync(join(contractsDir, name), 'utf8')));
+    console.log(`ok: ${name} compiles (JSON Schema 2020-12, strict)`);
+  } catch (error) {
+    fail(`${name} does not compile: ${String(error)}`);
+  }
 }
 
 // 3. Fixtures

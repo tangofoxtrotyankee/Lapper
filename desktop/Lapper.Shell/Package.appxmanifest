@@ -39,7 +39,10 @@
       </uap:VisualElements>
       <Extensions>
         <!-- Default off during alpha; the user opts in from Settings. -->
-        <uap5:Extension Category="windows.startupTask" Executable="$targetnametoken$.exe" EntryPoint="Windows.FullTrustApplication">
+        <!-- Literal exe name: $targetnametoken$ is only substituted on the
+             Application element, not on Extension elements, under
+             dotnet-build MSIX packaging (MakeAppx rejects the raw token). -->
+        <uap5:Extension Category="windows.startupTask" Executable="Lapper.Shell.exe" EntryPoint="Windows.FullTrustApplication">
           <uap5:StartupTask TaskId="LapperStartup" Enabled="false" DisplayName="Lapper" />
         </uap5:Extension>
       </Extensions>
