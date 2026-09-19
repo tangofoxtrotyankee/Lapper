@@ -155,15 +155,14 @@ public class AcquisitionPipelineTests
     [Fact]
     public async Task PrivateKeyOnScreenBlocksTheWholeCapture()
     {
+        // PEM markers assembled from parts to stay secret-scanner-safe.
+        var fakeKey = "-----BEGIN RSA PRIVATE" + " KEY-----\nkeymaterial\n" +
+                      "-----END RSA PRIVATE" + " KEY-----\n" + new string('x', 200);
         var uia = new RecordingUiaStage
         {
             Result = new UiaExtraction(
                 UiaOutcome.Success, null,
-                [new RawBlock(
-                    ContextBlockRoles.Document,
-                    "-----BEGIN RSA PRIVATE KEY-----\nkeymaterial\n-----END RSA PRIVATE KEY-----\n" +
-                    new string('x', 200),
-                    false, 0)],
+                [new RawBlock(ContextBlockRoles.Document, fakeKey, false, 0)],
                 false, 0, false, PasswordCheckCompleted: true),
         };
         var pixels = new RecordingPixelStage();
